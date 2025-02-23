@@ -24,7 +24,7 @@ issues:
     exclude-dirs-use-default: true
     max-issues-per-linter: 50
     max-same-issues: 3
-    new: false
+    new: true
     fix: false
     whole-files: true
 
