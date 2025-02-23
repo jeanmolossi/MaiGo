@@ -1,0 +1,35 @@
+run:
+    timeout: 1m
+    tests: true
+
+linters:
+    presets:
+        - complexity
+        - unused
+        - performance
+        - bugs
+        - style
+        - format
+        - error
+        - comment
+
+    disable:
+        - depguard
+
+issues:
+    exclude-use-default: false
+    exclude-case-sensitive: false
+    exclude-dirs-use-default: true
+    max-issues-per-linter: 50
+    max-same-issues: 3
+    new: false
+    fix: false
+    whole-files: true
+
+linters-settings:
+    revive:
+        enable-all-rules: false
+        rules:
+            - name: package-comments
+              severity: warning
+              exclude: [""]
