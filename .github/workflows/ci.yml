@@ -40,7 +40,7 @@ jobs:
 
             - name: Run benchmarks
               run: |
-                  go test -bench. -benchmem ./... > benchmark.txt
+                  go test -bench=. -benchmem ./... > benchmark.txt
 
             - name: Benchmark report
               uses: actions/upload-artifact@master
