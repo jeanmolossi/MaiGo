@@ -43,7 +43,12 @@ func (u *User) SetID(id uint) {
 
 // String implements Model.
 func (u *User) String() string {
-	return fmt.Sprintf("%+v", u)
+	return fmt.Sprintf(
+		"User{ID:%d Name:%s Birthdate:%s}",
+		u.ID,
+		u.Name,
+		u.Birthdate.Format(time.RFC3339),
+	)
 }
 
 // GetID implements Model.
@@ -58,5 +63,11 @@ func (r *Resource) SetID(id uint) {
 
 // String implements Model.
 func (r *Resource) String() string {
-	return fmt.Sprintf("%+v", r)
+	return fmt.Sprintf(
+		"Resource{ID:%d Type:%s Data:%s Timestamp:%s}",
+		r.ID,
+		r.Type,
+		r.Data,
+		r.Timestamp.Format(time.RFC3339),
+	)
 }
