@@ -35,7 +35,7 @@ func getUsers(c contracts.ClientHTTPMethods) {
 		return
 	}
 
-	handleResponse(resp, &testserver.User{})
+	handleResponse(resp, &[]testserver.User{})
 }
 
 func getUser(c contracts.ClientHTTPMethods, id string) {}
