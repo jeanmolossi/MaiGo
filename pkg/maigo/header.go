@@ -1,10 +1,10 @@
-package client
+package maigo
 
 import (
 	"net/http"
 
-	"github.com/jeanmolossi/MaiGo/pkg/client/contracts"
-	"github.com/jeanmolossi/MaiGo/pkg/client/header"
+	"github.com/jeanmolossi/MaiGo/pkg/maigo/contracts"
+	"github.com/jeanmolossi/MaiGo/pkg/maigo/header"
 )
 
 var _ contracts.Header = (*Header)(nil)

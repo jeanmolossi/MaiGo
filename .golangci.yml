@@ -42,7 +42,7 @@ linters-settings:
             - error
             - empty
             - stdlib
-            - github.com\/jeanmolossi\/MaiGo\/pkg\/client\/contracts
+            - github.com\/jeanmolossi\/MaiGo\/pkg\/maigo\/contracts
             - github.com\/jeanmolossi\/MaiGo\/examples\/testserver
 
     nlreturn:

@@ -1,11 +1,11 @@
-package client
+package maigo
 
 import (
 	"bytes"
 	"fmt"
 	"io"
 
-	"github.com/jeanmolossi/MaiGo/pkg/client/contracts"
+	"github.com/jeanmolossi/MaiGo/pkg/maigo/contracts"
 )
 
 var _ contracts.ResponseFluentBody = (*ResponseBody)(nil)

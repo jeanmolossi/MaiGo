@@ -1,6 +1,6 @@
-package client
+package maigo
 
-import "github.com/jeanmolossi/MaiGo/pkg/client/contracts"
+import "github.com/jeanmolossi/MaiGo/pkg/maigo/contracts"
 
 var _ contracts.Builder[contracts.ClientHTTPMethods] = (*ClientBuilder)(nil)
 

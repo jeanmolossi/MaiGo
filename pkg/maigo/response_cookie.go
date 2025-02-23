@@ -1,9 +1,9 @@
-package client
+package maigo
 
 import (
 	"net/http"
 
-	"github.com/jeanmolossi/MaiGo/pkg/client/contracts"
+	"github.com/jeanmolossi/MaiGo/pkg/maigo/contracts"
 )
 
 var _ contracts.ResponseFluentCookie = (*ResponseCookie)(nil)

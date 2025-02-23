@@ -4,8 +4,8 @@ import (
 	"log/slog"
 
 	"github.com/jeanmolossi/MaiGo/examples/testserver"
-	"github.com/jeanmolossi/MaiGo/pkg/client"
-	"github.com/jeanmolossi/MaiGo/pkg/client/contracts"
+	"github.com/jeanmolossi/MaiGo/pkg/maigo"
+	"github.com/jeanmolossi/MaiGo/pkg/maigo/contracts"
 )
 
 func main() {
@@ -14,7 +14,7 @@ func main() {
 	defer ts.Close()
 
 	// Creates a default client.
-	client := client.DefaultClient(ts.URL)
+	client := maigo.DefaultClient(ts.URL)
 
 	// Get all users.
 	getUsers(client)

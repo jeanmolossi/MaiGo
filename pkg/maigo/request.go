@@ -1,8 +1,8 @@
-package client
+package maigo
 
 import (
-	"github.com/jeanmolossi/MaiGo/pkg/client/contracts"
-	"github.com/jeanmolossi/MaiGo/pkg/client/method"
+	"github.com/jeanmolossi/MaiGo/pkg/maigo/contracts"
+	"github.com/jeanmolossi/MaiGo/pkg/maigo/method"
 )
 
 type Request struct {

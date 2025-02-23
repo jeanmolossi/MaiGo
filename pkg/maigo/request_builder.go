@@ -1,4 +1,4 @@
-package client
+package maigo
 
 import (
 	"crypto/rand"
@@ -10,7 +10,7 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/jeanmolossi/MaiGo/pkg/client/contracts"
+	"github.com/jeanmolossi/MaiGo/pkg/maigo/contracts"
 )
 
 type RequestBuilder struct {

@@ -1,4 +1,4 @@
-package client
+package maigo
 
 import (
 	"bytes"
@@ -9,7 +9,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/jeanmolossi/MaiGo/pkg/client/contracts"
+	"github.com/jeanmolossi/MaiGo/pkg/maigo/contracts"
 )
 
 var (

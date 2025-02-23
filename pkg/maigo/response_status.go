@@ -1,10 +1,10 @@
-package client
+package maigo
 
 import (
 	"fmt"
 	"net/http"
 
-	"github.com/jeanmolossi/MaiGo/pkg/client/contracts"
+	"github.com/jeanmolossi/MaiGo/pkg/maigo/contracts"
 )
 
 var _ contracts.ResponseFluentStatus = (*ResponseStatus)(nil)

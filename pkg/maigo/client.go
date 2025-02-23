@@ -1,10 +1,10 @@
-package client
+package maigo
 
 import (
 	"net/http"
 	"time"
 
-	"github.com/jeanmolossi/MaiGo/pkg/client/contracts"
+	"github.com/jeanmolossi/MaiGo/pkg/maigo/contracts"
 )
 
 // interface implementation type check.
