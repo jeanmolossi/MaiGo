@@ -13,6 +13,8 @@ import (
 	"github.com/jeanmolossi/MaiGo/pkg/maigo/contracts"
 )
 
+var _ contracts.RequestBuilder = (*RequestBuilder)(nil)
+
 type RequestBuilder struct {
 	request *Request
 }

@@ -8,4 +8,5 @@ var (
 	ErrClientValidation  = errors.New("invalid client attributes")
 	ErrRequestValidation = errors.New("invalid client attributes")
 	ErrCreateRequest     = errors.New("failed to create request")
+	ErrParseProxyURL     = errors.New("failed to parse proxy url")
 )

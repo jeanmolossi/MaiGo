@@ -19,6 +19,6 @@ func DefaultClient(baseURL string) contracts.ClientHTTPMethods {
 }
 
 // Build implements contracts.Builder.
-func (h *ClientBuilder) Build() contracts.ClientHTTPMethods {
-	return h.client
+func (b *ClientBuilder) Build() contracts.ClientHTTPMethods {
+	return b.client
 }
