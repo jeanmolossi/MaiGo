@@ -164,7 +164,7 @@ func (r *ResponseStatus) IsUseProxy() bool {
 	return r.response.StatusCode == http.StatusUseProxy
 }
 
-// Is_ check if status is 306.
+// IsUnused check if status is 306.
 //
 // RFC 9110, 15.4.7 (Unused)
 //
@@ -173,7 +173,8 @@ func (r *ResponseStatus) IsUseProxy() bool {
 //
 // See: https://www.rfc-editor.org/rfc/rfc9110.html#section-15.4.7-1
 func (r *ResponseStatus) IsUnused() bool {
-	return r.response.StatusCode == 306
+	unusedStatus := 306
+	return r.response.StatusCode == unusedStatus
 }
 
 // IsTemporaryRedirect check if status is 307.

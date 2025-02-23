@@ -4,7 +4,9 @@ import (
 	"bytes"
 	"encoding/json"
 	"encoding/xml"
+	"fmt"
 	"io"
+	"strings"
 	"sync"
 
 	"github.com/jeanmolossi/MaiGo/pkg/client/contracts"
@@ -23,58 +25,130 @@ type (
 
 	UnbufferedBody struct {
 		reader io.ReadCloser
-		mytex  sync.RWMutex
+		mutex  sync.RWMutex
 	}
 )
 
 // Close implements contracts.Body.
-func (u *UnbufferedBody) Close() error {
-	panic("unimplemented")
+func (u *UnbufferedBody) Close() (err error) {
+	u.mutex.Lock()
+	err = u.reader.Close()
+	u.mutex.Unlock()
+
+	return
 }
 
 // Read implements contracts.Body.
 func (u *UnbufferedBody) Read(p []byte) (n int, err error) {
-	panic("unimplemented")
+	u.mutex.RLock()
+	n, err = u.reader.Read(p)
+	u.mutex.RUnlock()
+
+	return
 }
 
 // ReadAsJSON implements contracts.Body.
-func (u *UnbufferedBody) ReadAsJSON(obj any) error {
-	panic("unimplemented")
+func (u *UnbufferedBody) ReadAsJSON(obj any) (err error) {
+	u.mutex.RLock()
+	err = json.NewDecoder(u.reader).Decode(obj)
+	u.mutex.RUnlock()
+
+	return
+}
+
+// WriteAsJSON implements contracts.Body.
+func (u *UnbufferedBody) WriteAsJSON(obj any) (err error) {
+	var buf bytes.Buffer
+
+	u.mutex.Lock()
+	defer u.mutex.Unlock()
+
+	err = json.NewEncoder(&buf).Encode(obj)
+	if err != nil {
+		return
+	}
+
+	u.reader = io.NopCloser(&buf)
+
+	return
+}
+
+// ReadAsXML implements contracts.Body.
+func (u *UnbufferedBody) ReadAsXML(obj any) (err error) {
+	u.mutex.RLock()
+	err = xml.NewDecoder(u.reader).Decode(obj)
+	u.mutex.RUnlock()
+
+	return
+}
+
+// WriteAsXML implements contracts.Body.
+func (u *UnbufferedBody) WriteAsXML(obj any) (err error) {
+	var buf bytes.Buffer
+
+	u.mutex.Lock()
+	defer u.mutex.Unlock()
+
+	err = xml.NewEncoder(&buf).Encode(obj)
+	if err != nil {
+		return
+	}
+
+	u.reader = io.NopCloser(&buf)
+
+	return
 }
 
 // ReadAsString implements contracts.Body.
 func (u *UnbufferedBody) ReadAsString() (string, error) {
-	panic("unimplemented")
+	u.mutex.RLock()
+	defer u.mutex.RUnlock()
+
+	stringBytes, err := io.ReadAll(u.reader)
+	if err != nil {
+		return "", fmt.Errorf("failed reading body as string: %w", err)
+	}
+
+	u.reader = io.NopCloser(bytes.NewReader(stringBytes))
+
+	return string(stringBytes), nil
 }
 
-// ReadAsXML implements contracts.Body.
-func (u *UnbufferedBody) ReadAsXML(obj any) error {
-	panic("unimplemented")
+// WriteAsString implements contracts.Body.
+func (u *UnbufferedBody) WriteAsString(body string) (err error) {
+	u.mutex.Lock()
+	u.reader = io.NopCloser(strings.NewReader(body))
+	u.mutex.Unlock()
+
+	return
 }
 
 // Set implements contracts.Body.
 func (u *UnbufferedBody) Set(body io.Reader) error {
-	panic("unimplemented")
+	u.mutex.Lock()
+	defer u.mutex.Unlock()
+
+	if closer, ok := body.(io.ReadCloser); ok {
+		u.reader = closer
+	} else {
+		u.reader = io.NopCloser(body)
+	}
+
+	return nil
 }
 
 // Unwrap implements contracts.Body.
 func (u *UnbufferedBody) Unwrap() io.Reader {
-	panic("unimplemented")
+	u.mutex.RLock()
+	defer u.mutex.RUnlock()
+
+	return u.reader
 }
 
-// WriteAsJSON implements contracts.Body.
-func (u *UnbufferedBody) WriteAsJSON(obj any) error {
-	panic("unimplemented")
-}
-
-// WriteAsString implements contracts.Body.
-func (u *UnbufferedBody) WriteAsString(body string) error {
-	panic("unimplemented")
-}
-
-// WriteAsXML implements contracts.Body.
-func (u *UnbufferedBody) WriteAsXML(obj any) error {
-	panic("unimplemented")
+func newUnbufferedBody(reader io.ReadCloser) *UnbufferedBody {
+	return &UnbufferedBody{
+		reader: reader,
+	}
 }
 
 // -----------------------------------------------------

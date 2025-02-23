@@ -21,27 +21,27 @@ type Response struct {
 
 // Body implements contracts.Response.
 func (r *Response) Body() contracts.ResponseFluentBody {
-	panic("unimplemented")
+	return r.body
 }
 
 // Cookie implements contracts.Response.
 func (r *Response) Cookie() contracts.ResponseFluentCookie {
-	panic("unimplemented")
+	return r.cookie
 }
 
 // Header implements contracts.Response.
 func (r *Response) Header() contracts.ResponseFluentHeader {
-	panic("unimplemented")
+	return r.header
 }
 
 // Request implements contracts.Response.
 func (r *Response) Request() contracts.ResponseFluentRequest {
-	panic("unimplemented")
+	return r.request
 }
 
 // Status implements contracts.Response.
 func (r *Response) Status() contracts.ResponseFluentStatus {
-	panic("unimplemented")
+	return r.status
 }
 
 func (r *Response) Raw() *http.Response {
@@ -52,10 +52,20 @@ func newResponse(response *http.Response) *Response {
 	return &Response{
 		raw: response,
 		// Fluent API
-		body:    nil,
-		cookie:  nil,
-		header:  nil,
-		request: nil,
-		status:  nil,
+		body: &ResponseBody{
+			body: newUnbufferedBody(response.Body),
+		},
+		cookie: &ResponseCookie{
+			cookies: response.Cookies(),
+		},
+		header: &ResponseHeader{
+			header: response.Header,
+		},
+		request: &ResponseRequest{
+			request: response.Request,
+		},
+		status: &ResponseStatus{
+			response: response,
+		},
 	}
 }
