@@ -16,7 +16,7 @@ type (
 		method       method.Type
 		path         string
 		searchParams url.Values
-		body         any
+		body         contracts.Body
 		validations  contracts.Validations
 		retryConfig  *RetryConfig
 	}
@@ -48,6 +48,10 @@ func (r *RequestConfigBase) Header() contracts.Header {
 	return r.httpHeader
 }
 
+func (r *RequestConfigBase) Cookies() contracts.Cookies {
+	return r.httpCookies
+}
+
 func (r *RequestConfigBase) Method() method.Type {
 	return r.method
 }
@@ -62,6 +66,10 @@ func (r *RequestConfigBase) SearchParams() url.Values {
 
 func (r *RequestConfigBase) RetryConfig() *RetryConfig {
 	return r.retryConfig
+}
+
+func (r *RequestConfigBase) Validations() contracts.Validations {
+	return r.validations
 }
 
 // RetryConfig methods

@@ -1,5 +1,5 @@
 package contracts
 
 type RequestBuilder interface {
-	Send() any
+	Send() (Response, error)
 }

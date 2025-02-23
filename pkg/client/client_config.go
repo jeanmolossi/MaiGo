@@ -5,6 +5,7 @@ import (
 	"net/url"
 
 	"github.com/jeanmolossi/MaiGo/pkg/client/contracts"
+	"github.com/jeanmolossi/MaiGo/pkg/client/method"
 )
 
 var (
@@ -24,47 +25,47 @@ type ClientConfigBase struct {
 
 // CONNECT implements contracts.ClientHTTPMethods.
 func (c *ClientConfigBase) CONNECT(path string) contracts.RequestBuilder {
-	panic("unimplemented")
+	return newRequest(c, method.CONNECT, path)
 }
 
 // DELETE implements contracts.ClientHTTPMethods.
 func (c *ClientConfigBase) DELETE(path string) contracts.RequestBuilder {
-	panic("unimplemented")
+	return newRequest(c, method.DELETE, path)
 }
 
 // GET implements contracts.ClientHTTPMethods.
 func (c *ClientConfigBase) GET(path string) contracts.RequestBuilder {
-	panic("unimplemented")
+	return newRequest(c, method.GET, path)
 }
 
 // HEAD implements contracts.ClientHTTPMethods.
 func (c *ClientConfigBase) HEAD(path string) contracts.RequestBuilder {
-	panic("unimplemented")
+	return newRequest(c, method.HEAD, path)
 }
 
 // OPTIONS implements contracts.ClientHTTPMethods.
 func (c *ClientConfigBase) OPTIONS(path string) contracts.RequestBuilder {
-	panic("unimplemented")
+	return newRequest(c, method.OPTIONS, path)
 }
 
 // PATCH implements contracts.ClientHTTPMethods.
 func (c *ClientConfigBase) PATCH(path string) contracts.RequestBuilder {
-	panic("unimplemented")
+	return newRequest(c, method.PATCH, path)
 }
 
 // POST implements contracts.ClientHTTPMethods.
 func (c *ClientConfigBase) POST(path string) contracts.RequestBuilder {
-	panic("unimplemented")
+	return newRequest(c, method.POST, path)
 }
 
 // PUT implements contracts.ClientHTTPMethods.
 func (c *ClientConfigBase) PUT(path string) contracts.RequestBuilder {
-	panic("unimplemented")
+	return newRequest(c, method.PUT, path)
 }
 
 // TRACE implements contracts.ClientHTTPMethods.
 func (c *ClientConfigBase) TRACE(path string) contracts.RequestBuilder {
-	panic("unimplemented")
+	return newRequest(c, method.TRACE, path)
 }
 
 // Cookies implements contracts.ClientConfig.
