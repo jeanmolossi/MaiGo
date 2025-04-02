@@ -25,6 +25,6 @@ jobs:
                   cache-dependency-path: |
                       go.sum
             - name: lint ${{ matrix.go-version }}
-              uses: golangci/golangci-lint-action@master
+              uses: golangci/golangci-lint-action@main
               with:
                   version: latest

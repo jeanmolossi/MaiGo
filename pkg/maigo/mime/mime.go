@@ -1,3 +1,4 @@
+// Package mime contains the mime types to http headers
 package mime
 
 // Type represents Internet Media Types as defined by IANA.

@@ -1,2 +1,2 @@
-// Package client implements the client
+// Package maigo implements the client
 package maigo
