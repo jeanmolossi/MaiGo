@@ -27,7 +27,7 @@ type (
 func NewMux(config *Server, repository *Provider) http.Handler {
 	mux := http.NewServeMux()
 
-	mux.HandleFunc("/", Healthcheck(config.ID))
+	mux.HandleFunc("/", Healthcheck(&config.ID))
 
 	mux.HandleFunc("GET /users", GetAll(repository.User))
 	mux.HandleFunc("GET /users/{id}", GetByID(repository.User))
@@ -75,11 +75,11 @@ func BusyMiddleware(config *Server) Middleware {
 	}
 }
 
-func Healthcheck(serverID int) http.HandlerFunc {
+func Healthcheck(serverID *int) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		_ = json.NewEncoder(w).Encode(HelthcheckMessage{
-			ServerID:  strconv.Itoa(serverID),
+			ServerID:  strconv.Itoa(*serverID),
 			Status:    "UP",
 			Timestamp: time.Now().Format(time.RFC3339),
 		})
@@ -115,7 +115,6 @@ func GetByID(repository Repository) http.HandlerFunc {
 		}
 
 		_ = json.NewEncoder(w).Encode(resource)
-		return
 	}
 }
 

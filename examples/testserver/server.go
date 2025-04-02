@@ -34,12 +34,14 @@ func (m *Manager) generateServerID() int {
 }
 
 func (m *Manager) newServer(config *Server) *httptest.Server {
-	m.mu.Lock()
-
 	testsrv := httptest.NewServer(NewMux(config, m.repository))
+
 	config.ID = m.generateServerID()
 	config.URL = testsrv.URL
+
+	m.mu.Lock()
 	m.running = append(m.running, *config)
+	m.mu.Unlock()
 
 	slog.Info("test server running!", "config", config)
 
