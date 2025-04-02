@@ -14,6 +14,12 @@ func NewClient(baseURL string) *ClientBuilder {
 	}
 }
 
+func NewClientLoadBalancer(baseURLs []string) *ClientBuilder {
+	return &ClientBuilder{
+		client: newBalancedClientConfigBase(baseURLs),
+	}
+}
+
 func DefaultClient(baseURL string) contracts.ClientHTTPMethods {
 	return NewClient(baseURL).Build()
 }

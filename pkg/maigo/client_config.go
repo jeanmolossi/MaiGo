@@ -2,6 +2,7 @@ package maigo
 
 import (
 	"errors"
+	"fmt"
 	"net/url"
 
 	"github.com/jeanmolossi/MaiGo/pkg/maigo/contracts"
@@ -111,5 +112,36 @@ func newClientConfigBase(baseURL string) *ClientConfigBase {
 		httpCookie:    newDefaultHttpCookies(),
 		validations:   newDefaultValidations(validations),
 		ConfigBaseURL: newDefaultBaseURL(parsedURL),
+	}
+}
+
+func newBalancedClientConfigBase(baseURLs []string) *ClientConfigBase {
+	var validations []error
+
+	parsedURLs := make([]*url.URL, 0, len(baseURLs)) // pre-alloc cap like baseURLs
+	for index, baseURL := range baseURLs {
+		if baseURL == "" {
+			validations = append(validations, fmt.Errorf("base URL %d: %w", index, ErrEmptyBaseURL))
+			continue
+		}
+
+		parsedURL, err := url.Parse(baseURL)
+		if err != nil {
+			validations = append(validations, errors.Join(ErrParseURL, err))
+		}
+
+		parsedURLs = append(parsedURLs, parsedURL)
+	}
+
+	if len(parsedURLs) == 0 {
+		validations = append(validations, ErrEmptyBaseURL)
+	}
+
+	return &ClientConfigBase{
+		httpClient:    newDefaultHTTPClient(),
+		httpHeader:    newDefaultHTTPHeader(),
+		httpCookie:    newDefaultHttpCookies(),
+		validations:   newDefaultValidations(validations),
+		ConfigBaseURL: newBalancedBaseURL(parsedURLs),
 	}
 }
