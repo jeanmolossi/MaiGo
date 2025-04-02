@@ -47,7 +47,7 @@ type ResponseFluentStatus interface {
 	Is2xxSuccessful() bool
 	Is3xxRedirection() bool
 	Is4xxClientError() bool
-	Is500ServerError() bool
+	Is5xxServerError() bool
 	IsError() bool
 	ResponseStatus
 }

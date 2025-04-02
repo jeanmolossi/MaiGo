@@ -47,8 +47,8 @@ func (r *ResponseStatus) Is4xxClientError() bool {
 	return r.response.StatusCode >= 400 && r.response.StatusCode < 500
 }
 
-// Is500ServerError check if status is xxx.
-func (r *ResponseStatus) Is500ServerError() bool {
+// Is5xxServerError check if status is xxx.
+func (r *ResponseStatus) Is5xxServerError() bool {
 	return r.response.StatusCode >= 500 && r.response.StatusCode < 600
 }
 
@@ -401,5 +401,5 @@ func (r *ResponseStatus) IsNetworkAuthenticationRequired() bool {
 
 // IsError check if status is xxx.
 func (r *ResponseStatus) IsError() bool {
-	return r.Is4xxClientError() || r.Is500ServerError()
+	return r.Is4xxClientError() || r.Is5xxServerError()
 }
