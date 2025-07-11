@@ -15,7 +15,6 @@ import (
 	stdoutmetric "go.opentelemetry.io/otel/exporters/stdout/stdoutmetric"
 	stdout "go.opentelemetry.io/otel/exporters/stdout/stdouttrace"
 	"go.opentelemetry.io/otel/propagation"
-	"go.opentelemetry.io/otel/sdk/metric"
 	sdkmetric "go.opentelemetry.io/otel/sdk/metric"
 	"go.opentelemetry.io/otel/sdk/resource"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
@@ -60,8 +59,8 @@ func initMeter() (*sdkmetric.MeterProvider, error) {
 	res := resource.NewSchemaless(semconv.ServiceName("stdoutmetric-maigo-example"))
 
 	mp := sdkmetric.NewMeterProvider(
-		metric.WithReader(metric.NewPeriodicReader(exp)),
-		metric.WithResource(res),
+		sdkmetric.WithReader(sdkmetric.NewPeriodicReader(exp)),
+		sdkmetric.WithResource(res),
 	)
 
 	otel.SetMeterProvider(mp)
