@@ -11,6 +11,9 @@ linters:
         - nonamedreturns
         - exhaustruct
 
+    enable:
+        - wsl
+
     settings:
         revive:
             enable-all-rules: false
@@ -51,7 +54,6 @@ formatters:
         - gofmt
         - gofumpt
         - goimports
-        - golines
 
 issues:
     max-issues-per-linter: 50
