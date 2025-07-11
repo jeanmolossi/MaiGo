@@ -1,0 +1,25 @@
+name: Govulncheck
+
+on:
+    push:
+        branches:
+            - main
+    pull_request:
+
+jobs:
+    govulncheck:
+        runs-on: ubuntu-latest
+        env:
+            GO111MODULE: on
+        steps:
+            - uses: actions/checkout@v4
+            - uses: actions/setup-go@v5
+              with:
+                  go-version: "stable"
+                  cache: true
+
+            - name: Install Govulncheck
+              run: go install golang.org/x/vuln/cmd/govulncheck@v1.1.4
+
+            - name: Run Govulncheck
+              run: govulncheck ./...
