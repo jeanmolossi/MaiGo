@@ -4,9 +4,9 @@ import (
 	"log/slog"
 	"time"
 
+	"github.com/jeanmolossi/MaiGo/async"
 	"github.com/jeanmolossi/MaiGo/examples/testserver"
 	"github.com/jeanmolossi/MaiGo/pkg/maigo"
-	"github.com/jeanmolossi/MaiGo/reqgroup"
 )
 
 func main() {
@@ -21,7 +21,7 @@ func main() {
 
 	start := time.Now()
 
-	group, err := reqgroup.All(
+	group, err := async.All(
 		client.GET("/users"),
 		client.GET("/resources"),
 	)

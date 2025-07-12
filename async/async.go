@@ -64,3 +64,91 @@ func Dispatch(req contracts.RequestBuilder) (*DispatchResult, error) {
 
 	return result, nil
 }
+
+// Group of requests that are dispatched.
+type Group struct {
+	results []result
+	wg      sync.WaitGroup
+}
+
+// Results of the requests. The results always be the same size of
+// the number of requests passed to [All].
+//
+// The indexes can be nil if request still in transit.
+func (g *Group) Results() []result {
+	return g.results
+}
+
+// Size of results. It have the same size of the number of requests
+// called in [All].
+//
+// Example:
+//
+//	group, err := async.All(
+//	    client.GET("/users/1"),
+//	    client.GET("/users/2"),
+//	    client.GET("/users/3"),
+//	)
+//	if err != nil {
+//	    // handle err
+//	}
+//
+//	group.Size() // 3 event requests still in transit.
+func (g *Group) Size() int {
+	return len(g.results)
+}
+
+// Wait for all requests.
+func (g *Group) Wait() {
+	g.wg.Wait()
+}
+
+// Result read a single result from index [i int]. It panics if
+// index greather than group size or is a negative int.
+func (g *Group) Result(i int) (contracts.Response, error) {
+	length := len(g.results)
+	if i > length-1 {
+		panic(fmt.Sprintf("can not access result index: %d", i))
+	}
+
+	if i < 0 {
+		panic("can not access result with negative index")
+	}
+
+	result := g.results[i]
+
+	return result.response, result.err
+}
+
+// All dispatch the requests in a request own's goroutine.
+// If you pass 10 request, it opens 10 goroutines each one with a request.
+func All(builders ...contracts.RequestBuilder) (*Group, error) {
+	if len(builders) == 0 {
+		return nil, ErrNoRequests
+	}
+
+	g := &Group{
+		results: make([]result, len(builders)),
+		wg:      sync.WaitGroup{},
+	}
+	g.wg.Add(len(builders))
+
+	for i, builder := range builders {
+		if builder == nil {
+			return nil, ErrNilRequestBuilder
+		}
+
+		go func(i int, b contracts.RequestBuilder) {
+			defer g.wg.Done()
+
+			resp, err := b.Send()
+
+			g.results[i] = result{
+				response: resp,
+				err:      err,
+			}
+		}(i, builder)
+	}
+
+	return g, nil
+}
