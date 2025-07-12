@@ -75,6 +75,9 @@ type Group struct {
 // the number of requests passed to [All].
 //
 // The indexes can be nil if request still in transit.
+//
+// PAY ATTENTION: that is not a slice copy. Then, if you modify the
+// result it affects the original value.
 func (g *Group) Results() []result {
 	return g.results
 }
