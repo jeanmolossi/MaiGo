@@ -8,6 +8,8 @@ type Server struct {
 	EnableBusy        bool
 	EnableHeaderDebug bool
 
-	Interval    time.Duration
+	// Interval specifies the base sleep duration for request delays
+	Interval time.Duration
+	// BackoffRate specifies the multiplier for exponential backoff (e.g., 2.0 for doubling delay)
 	BackoffRate float64
 }
