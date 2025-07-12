@@ -30,12 +30,6 @@ func main() {
 		return
 	}
 
-	length := len(group.Results())
-	if length != 2 {
-		slog.Error("was expected 2 results", "results", length)
-		return
-	}
-
 	slog.Info("waiting group resolve", "until now", time.Since(start))
 
 	group.Wait()
