@@ -111,11 +111,11 @@ func (g *Group) Wait() {
 func (g *Group) Result(i int) (contracts.Response, error) {
 	length := len(g.results)
 	if i > length-1 {
-		panic(fmt.Sprintf("can not access result index: %d", i))
+		return nil, fmt.Errorf("index %d out ot range [0-%d]", i, length-1)
 	}
 
 	if i < 0 {
-		panic("can not access result with negative index")
+		return nil, fmt.Errorf("negative index %d not allowed", i)
 	}
 
 	result := g.results[i]
