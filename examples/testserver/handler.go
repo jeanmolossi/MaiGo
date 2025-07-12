@@ -1,6 +1,7 @@
 package testserver
 
 import (
+	"encoding/binary"
 	"encoding/json"
 	"log/slog"
 	"math/rand"
@@ -40,6 +41,7 @@ func NewMux(config *Server, repository *Provider) http.Handler {
 	middlewares := []Middleware{
 		HeaderDebugMiddleware(config),
 		BusyMiddleware(config),
+		SleepMiddleware(config),
 	}
 
 	return handleWithMiddlewares(middlewares, mux)
@@ -68,6 +70,18 @@ func BusyMiddleware(config *Server) Middleware {
 				})
 
 				return
+			}
+
+			next.ServeHTTP(w, r)
+		})
+	}
+}
+
+func SleepMiddleware(config *Server) Middleware {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if config.Interval > time.Duration(0) {
+				time.Sleep(calculateRetryDelay(config))
 			}
 
 			next.ServeHTTP(w, r)
@@ -152,4 +166,30 @@ func writeErrorResponse(w http.ResponseWriter, errorMessage ErrorMessage) {
 
 func shouldSimulateServerError() bool {
 	return rand.Intn(100) < 100
+}
+
+func calculateRetryDelay(config *Server) time.Duration {
+	interval := config.Interval
+	rate := config.Jitter
+
+	delay := float64(interval) * rate
+	delay = secureFloat64() * delay
+
+	return time.Duration(delay)
+}
+
+func secureFloat64() float64 {
+	var bits [8]byte
+	// read randomic 8 bytes from secure source
+	_, err := rand.Read(bits[:])
+	if err != nil {
+		panic(err)
+	}
+
+	// parse bytes to 64 bits int
+	n := binary.LittleEndian.Uint64(bits[:])
+
+	// normalize to interval [0, 1]
+	//nolint:mnd // 64 shift
+	return float64(n) / (1 << 64)
 }

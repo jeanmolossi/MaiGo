@@ -4,6 +4,7 @@ import (
 	"log/slog"
 	"net/http/httptest"
 	"sync"
+	"time"
 )
 
 type (
@@ -66,6 +67,17 @@ func (b *ServerBuilder) EnableBusy() *ServerBuilder {
 
 func (b *ServerBuilder) EnableHeaderDebug() *ServerBuilder {
 	b.config.EnableHeaderDebug = true
+	return b
+}
+
+func (b *ServerBuilder) SleepFor(d time.Duration, jitter float64) *ServerBuilder {
+	if jitter == 0 {
+		jitter = 2.0
+	}
+
+	b.config.Interval = d
+	b.config.Jitter = jitter
+
 	return b
 }
 
