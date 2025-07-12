@@ -8,6 +8,6 @@ type Server struct {
 	EnableBusy        bool
 	EnableHeaderDebug bool
 
-	Interval time.Duration
-	Jitter   float64
+	Interval    time.Duration
+	BackoffRate float64
 }

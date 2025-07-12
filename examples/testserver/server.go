@@ -70,13 +70,13 @@ func (b *ServerBuilder) EnableHeaderDebug() *ServerBuilder {
 	return b
 }
 
-func (b *ServerBuilder) SleepFor(d time.Duration, jitter float64) *ServerBuilder {
-	if jitter == 0 {
-		jitter = 2.0
+func (b *ServerBuilder) SleepFor(d time.Duration, backoff float64) *ServerBuilder {
+	if backoff == 0 {
+		backoff = 2.0
 	}
 
 	b.config.Interval = d
-	b.config.Jitter = jitter
+	b.config.BackoffRate = backoff
 
 	return b
 }

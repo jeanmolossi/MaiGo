@@ -4,7 +4,7 @@ import (
 	"encoding/binary"
 	"encoding/json"
 	"log/slog"
-	"math/rand"
+	"math/rand/v2"
 	"net/http"
 	"strconv"
 	"time"
@@ -165,12 +165,12 @@ func writeErrorResponse(w http.ResponseWriter, errorMessage ErrorMessage) {
 }
 
 func shouldSimulateServerError() bool {
-	return rand.Intn(100) < 100
+	return rand.IntN(100) < 50
 }
 
 func calculateRetryDelay(config *Server) time.Duration {
 	interval := config.Interval
-	rate := config.Jitter
+	rate := config.BackoffRate
 
 	delay := float64(interval) * rate
 	delay = secureFloat64() * delay
@@ -179,9 +179,17 @@ func calculateRetryDelay(config *Server) time.Duration {
 }
 
 func secureFloat64() float64 {
-	var bits [8]byte
+	var seed [32]byte
+	for i := range seed {
+		seed[i] = byte(i)
+	}
+
+	c := rand.NewChaCha8(seed)
+
+	bits := make([]byte, 8)
+
 	// read randomic 8 bytes from secure source
-	_, err := rand.Read(bits[:])
+	_, err := c.Read(bits)
 	if err != nil {
 		panic(err)
 	}
