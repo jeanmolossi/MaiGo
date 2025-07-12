@@ -81,7 +81,7 @@ func SleepMiddleware(config *Server) Middleware {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			if config.Interval > time.Duration(0) {
-				time.Sleep(calculateRetryDelay(config))
+				time.Sleep(calculateRandomDelay(config))
 			}
 
 			next.ServeHTTP(w, r)
@@ -168,7 +168,7 @@ func shouldSimulateServerError() bool {
 	return rand.IntN(100) < 50
 }
 
-func calculateRetryDelay(config *Server) time.Duration {
+func calculateRandomDelay(config *Server) time.Duration {
 	interval := config.Interval
 	rate := config.BackoffRate
 
