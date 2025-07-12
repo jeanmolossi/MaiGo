@@ -8,9 +8,11 @@ import (
 	"math"
 	"net/http"
 	"net/url"
+	"strconv"
 	"time"
 
 	"github.com/jeanmolossi/MaiGo/pkg/maigo/contracts"
+	"github.com/jeanmolossi/MaiGo/pkg/maigo/header"
 )
 
 var _ contracts.RequestBuilder = (*RequestBuilder)(nil)
@@ -97,7 +99,11 @@ func (r *RequestBuilder) executeWithRetry(request *http.Request) (contracts.Resp
 		response     contracts.Response
 	)
 
+	const retryHeader = header.Type("X-Retry-Attempt")
+
 	for attempt := range config.MaxAttempts() {
+		request.Header.Set(retryHeader.String(), strconv.FormatUint(uint64(attempt), 36))
+
 		response, executionErr = r.execute(request)
 
 		if executionErr == nil {
