@@ -2,8 +2,15 @@ package httpx
 
 import (
 	"bytes"
+	"errors"
 	"io"
 	"net/http"
+)
+
+var ErrBodyTruncated = errors.New("body truncated to maxSize")
+
+const (
+	MaxSafeBodyCap = 1 << 30 // 1 MiB
 )
 
 // CloneRequest avoid data races (copies r and Header)
@@ -23,16 +30,32 @@ func ReadAndRestoreBody(body io.ReadCloser, maxSize int) (raw []byte, restored i
 	//nolint:errcheck // just close body
 	defer body.Close()
 
-	limited := io.LimitReader(body, int64(maxSize)+1) // +1 to mark truncate
-
-	b, err := io.ReadAll(limited)
-	if err != nil {
-		return nil, nil, err
+	if maxSize <= 0 {
+		return nil, http.NoBody, nil
 	}
 
-	if len(b) > maxSize {
-		b = b[:maxSize]
+	maxSize = min(maxSize, MaxSafeBodyCap)
+
+	buf := make([]byte, maxSize+1)
+	n, readErr := io.ReadAtLeast(body, buf[:0], 0)
+
+	if n == 0 && readErr == io.ErrUnexpectedEOF {
+		readErr = nil
 	}
 
-	return b, io.NopCloser(bytes.NewReader(b)), nil
+	if readErr != nil && !errors.Is(readErr, io.EOF) {
+		return nil, nil, readErr
+	}
+
+	n = min(n, maxSize)
+
+	b := buf[:n]
+
+	rc := io.NopCloser(bytes.NewReader(b))
+
+	if n > maxSize {
+		return b, rc, ErrBodyTruncated
+	}
+
+	return b, rc, nil
 }
