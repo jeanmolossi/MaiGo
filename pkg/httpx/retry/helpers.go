@@ -14,7 +14,7 @@ type BodyReplayStrategy int
 
 const (
 	ReplayIfSmallElseNoRetry BodyReplayStrategy = iota // secure default
-	ReplayIfSmallElseSpillToDist
+	ReplayIfSmallElseSpillToDisk
 	NoReplay
 )
 
@@ -55,7 +55,7 @@ func ensureReopenableBody(r *http.Request, capMem int64, strat BodyReplayStrateg
 
 	// If reach here. Size was exceeded.
 	// Decide by policy
-	if strat != ReplayIfSmallElseSpillToDist {
+	if strat != ReplayIfSmallElseSpillToDisk {
 		// No spill, caller should avoid retry when have body
 		_ = r.Body.Close()
 		return func() {}, false, nil
