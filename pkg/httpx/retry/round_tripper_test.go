@@ -17,7 +17,7 @@ func backoffZero(int) time.Duration { return 0 }
 
 // ----- Tests -----
 
-// Replays small body faithfully and sets attempt header (using POST to avoid the AllowedMethods bug).
+// Replays small body faithfully and sets attempt header.
 func TestRetry_ReplaysSmallBody_AndSetsAttemptHeader(t *testing.T) {
 	base, assert := httpx.NewRoundTripMockBuilder().
 		AddOutcome(httpx.NewResp(500, "fail"), nil).
