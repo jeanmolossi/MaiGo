@@ -141,3 +141,13 @@ func parseRetryAfter(h string) (time.Duration, bool) {
 
 	return 0, false
 }
+
+func allow(methods ...string) map[string]bool {
+	allowed := make(map[string]bool, len(methods))
+
+	for _, method := range methods {
+		allowed[method] = true
+	}
+
+	return allowed
+}

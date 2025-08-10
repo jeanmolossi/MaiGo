@@ -227,13 +227,14 @@ func TestRetry_parseRetryAfter_SecondsAndDate(t *testing.T) {
 			IgnoreRetryAfter:   false,
 			MaxRetryAfter:      10 * time.Second,
 			ReplayBodyStrategy: ReplayIfSmallElseNoRetry,
+			AllowedMethods:     allow(http.MethodPost),
 		}
 		cfg.OnRetry = func(_ context.Context, _ int, _ *http.Request, _ *http.Response, _ error, d time.Duration) {
 			delays = append(delays, d)
 		}
 		rt := WithRetry(cfg)(base)
 
-		req, _ := http.NewRequest(http.MethodPut, "http://x", strings.NewReader("a"))
+		req, _ := http.NewRequest(http.MethodPost, "http://x", strings.NewReader("a"))
 		_, _ = rt.RoundTrip(req)
 
 		require.Len(t, delays, 1, "Retry-After seconds not respected: %#v", delays)
