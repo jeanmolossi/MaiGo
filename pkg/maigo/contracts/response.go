@@ -174,5 +174,5 @@ type ResponseStatus interface {
 	IsInsufficientStorage() bool           // IsInsufficientStorage is true for 507 Insufficient Storage.
 	IsLoopDetected() bool                  // IsLoopDetected is true for 508 Loop Detected.
 	IsNotExtended() bool                   // IsNotExtended is true for 510 Not Extended.
-        IsNetworkAuthenticationRequired() bool // IsNetworkAuthenticationRequired is true for 511 Network Authentication Required.
+	IsNetworkAuthenticationRequired() bool // IsNetworkAuthenticationRequired is true for 511 Network Authentication Required.
 }
