@@ -5,7 +5,10 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
-	"sync/atomic"
+	"sync"
+	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 type outcome struct {
@@ -14,19 +17,41 @@ type outcome struct {
 }
 
 type roundTripMock struct {
+	mu sync.Mutex
+
 	outcomes []outcome
-	idx      int32
+
+	calls       int
+	seenBodies  []string
+	seenHeaders []http.Header
 }
 
 func (s *roundTripMock) RoundTrip(r *http.Request) (*http.Response, error) {
-	i := atomic.AddInt32(&s.idx, 1) - 1
-	if int(i) >= len(s.outcomes) {
-		i = int32(len(s.outcomes) - 1)
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	var bodyBytes []byte
+	if r.Body != nil && r.Body != http.NoBody {
+		bodyBytes, _ = io.ReadAll(r.Body)
+		_ = r.Body.Close()
 	}
 
-	o := s.outcomes[i]
+	s.seenBodies = append(s.seenBodies, string(bodyBytes))
+	s.seenHeaders = append(s.seenHeaders, r.Header.Clone())
 
-	return o.resp, o.err
+	if s.calls >= len(s.outcomes) {
+		s.calls++
+
+		resp := NewResp(200, "")
+		resp.Request = r
+
+		return resp, nil
+	}
+
+	out := s.outcomes[s.calls]
+	s.calls++
+
+	return out.resp, out.err
 }
 
 type RoundTripMockBuilder struct {
@@ -44,8 +69,69 @@ func (r *RoundTripMockBuilder) AddOutcome(res *http.Response, err error) *RoundT
 	return r
 }
 
-func (r *RoundTripMockBuilder) Build() http.RoundTripper {
-	return r.mock
+func (r *RoundTripMockBuilder) Build(t *testing.T) (http.RoundTripper, Assert) {
+	if t == nil {
+		return r.mock, Assert{}
+	}
+
+	t.Helper()
+
+	return r.mock, Assert{mock: r.mock, t: t}
+}
+
+// Assert
+
+type Assert struct {
+	mock *roundTripMock
+	t    *testing.T
+}
+
+func (a Assert) Calls(expected int, args ...any) {
+	require.Equal(a.t, expected, a.mock.calls, args...)
+}
+
+func (a Assert) SeenBodiesLen(expected int, args ...any) {
+	require.Len(a.t, a.mock.seenBodies, expected, args...)
+}
+
+func (a Assert) SeenBodies(callIdx int, expected string, args ...any) {
+	require.Equal(a.t, expected, a.mock.seenBodies[callIdx], args...)
+}
+
+func (a Assert) SeenHeadersLen(expected int, args ...any) {
+	require.Len(a.t, a.mock.seenHeaders, expected, args...)
+}
+
+func (a Assert) SeenHeaders(callIdx int, key, expected string, args ...any) {
+	require.Equal(a.t, expected, a.mock.seenHeaders[callIdx].Get(key), args...)
+}
+
+// ResponseBuilder
+
+type ResponseBuilder struct {
+	resp *http.Response
+}
+
+func NewResponseBuilder(status int, body string) *ResponseBuilder {
+	resp := NewResp(status, body)
+
+	return &ResponseBuilder{
+		resp: resp,
+	}
+}
+
+func (r *ResponseBuilder) SetRequest(req *http.Request) *ResponseBuilder {
+	r.resp.Request = req
+	return r
+}
+
+func (r *ResponseBuilder) SetHeader(k, v string) *ResponseBuilder {
+	r.resp.Header.Set(k, v)
+	return r
+}
+
+func (r *ResponseBuilder) Build() *http.Response {
+	return r.resp
 }
 
 func NewResp(status int, body string) *http.Response {
@@ -57,7 +143,7 @@ func NewResp(status int, body string) *http.Response {
 
 	return &http.Response{
 		StatusCode: status,
-		Status:     http.StatusText(status),
+		Status:     strconv.Itoa(status) + " " + http.StatusText(status),
 		Body:       io.NopCloser(strings.NewReader(body)),
 		Header:     headers,
 	}

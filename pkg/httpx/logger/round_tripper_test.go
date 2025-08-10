@@ -29,9 +29,9 @@ const mockURL = "http://foo.bar/baz"
 func TestLogger_HooksAndBodySample(t *testing.T) {
 	t.Parallel()
 
-	next := httpx.NewRoundTripMockBuilder().
+	next, _ := httpx.NewRoundTripMockBuilder().
 		AddOutcome(httpx.NewResp(200, `{"pong":true}`), nil).
-		Build()
+		Build(t)
 
 	log := &memLogger{}
 
@@ -68,9 +68,9 @@ func TestLogger_HooksAndBodySample(t *testing.T) {
 func TestLogger_DefaultHooks(t *testing.T) {
 	t.Parallel()
 
-	next := httpx.NewRoundTripMockBuilder().
+	next, _ := httpx.NewRoundTripMockBuilder().
 		AddOutcome(httpx.NewResp(200, `{"pong":true}`), nil).
-		Build()
+		Build(t)
 
 	log := &memLogger{}
 
@@ -102,9 +102,14 @@ func TestLogger_Errors(t *testing.T) {
 func testFailingRequest(t *testing.T) {
 	t.Parallel()
 
-	next := httpx.NewRoundTripMockBuilder().
-		AddOutcome(httpx.NewResp(500, `{}`), errors.New("request error")).
-		Build()
+	next, _ := httpx.NewRoundTripMockBuilder().
+		AddOutcome(
+			httpx.NewResponseBuilder(500, `{}`).
+				SetHeader("Content-Length", "0"). // proposital content different from body
+				Build(),
+			errors.New("request error"),
+		).
+		Build(t)
 
 	log := &memLogger{}
 
@@ -120,6 +125,7 @@ func testFailingRequest(t *testing.T) {
 	require.NoError(t, err, "unexpected error: %s", err)
 
 	resp, err := rt.RoundTrip(req)
+	require.NotNil(t, resp, "unexpected nil response")
 	require.EqualError(t, err, "request error")
 	require.Equal(t, http.StatusInternalServerError, resp.StatusCode, "expected %s, got %s", "Internal Server Error", http.StatusText(resp.StatusCode))
 	require.Len(t, log.info, 1, "expected 1 log infos, got %d", len(log.info))
@@ -132,9 +138,9 @@ func testDoneRequestWithoutHeaders(t *testing.T) {
 	mockResp := httpx.NewResp(200, `{}`)
 	mockResp.Header = make(http.Header)
 
-	next := httpx.NewRoundTripMockBuilder().
+	next, _ := httpx.NewRoundTripMockBuilder().
 		AddOutcome(mockResp, nil).
-		Build()
+		Build(t)
 
 	log := &memLogger{}
 
