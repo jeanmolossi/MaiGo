@@ -9,12 +9,12 @@ import (
 // Header is the interface that wraps the basic methods for managing HTTP headers.
 //
 // This wrapper provides an abstraction layer over the standard http.Header type,
-// allowing for type-safe header manipulation and potential future enhancements without
-// changing the public API.
+// allowing for type-safe header manipulation and potential future enhancements
+// without changing the public API.
 //
 // It enables the package to implement custom header handling logic, such as
-// case-insensitive header matching or header-specific validations, while maintaining
-// a consistent interface for both internal use and potential extension points.
+// case-insensitive header matching or header-specific validations, while
+// maintaining a consistent interface.
 //
 // Example:
 //
@@ -23,12 +23,16 @@ import (
 //	}
 //
 //	func (c *CustomHeader) Set(key header.Type, value string) {
-//	    w.header.Set(string(key), value)
+//	    c.header.Set(string(key), value)
 //	    // Add your logic here...
 //	}
 type Header interface {
+	// Unwrap returns the underlying header map.
 	Unwrap() *http.Header
+	// Get retrieves the first value associated with the key.
 	Get(key header.Type) string
+	// Add appends a value for the key.
 	Add(key header.Type, value string)
+	// Set sets the header value, replacing any existing values.
 	Set(key header.Type, value string)
 }

@@ -12,4 +12,8 @@ var (
 	ErrToSetBody         = errors.New("failed to set body")
 	ErrToMarshalJSON     = errors.New("failed to marshal json")
 	ErrToMarshalXML      = errors.New("failed to marshal xml")
+
+	ErrAddingRawQueryToActualQuery = errors.New("cannot merge raw query into current query")
+	ErrSettingRawQuery             = errors.New("cannot parse raw query string")
+	ErrInvalidQueryString          = errors.New("invalid query")
 )
