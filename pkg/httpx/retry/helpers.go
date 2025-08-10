@@ -63,7 +63,7 @@ func ensureReopenableBody(r *http.Request, capMem int64, strat BodyReplayStrateg
 
 	// Big: spill to file
 
-	f, ferr := os.CreateTemp(".spill", "retry-body-*")
+	f, ferr := os.CreateTemp("", "retry-body-*")
 	if ferr != nil {
 		_ = r.Body.Close()
 		return nil, false, ferr
