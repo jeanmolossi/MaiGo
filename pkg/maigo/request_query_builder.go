@@ -88,9 +88,14 @@ func (r *RequestQueryBuilder) SetParams(params contracts.Params) contracts.Reque
 
 // SetRawString implements contracts.BuilderRequestQuery.
 func (r *RequestQueryBuilder) SetRawString(raw string) contracts.RequestBuilder {
+	raw = strings.TrimSpace(raw)
+	if raw == "" {
+		return r.parent
+	}
+
 	raw = trimQueryPrefix(raw)
 
-	newSearchParams, err := url.ParseQuery(strings.TrimSpace(raw))
+	newSearchParams, err := url.ParseQuery(raw)
 	if err != nil {
 		r.config.validations.Add(errors.Join(ErrSettingRawQuery, err))
 		return r.parent
