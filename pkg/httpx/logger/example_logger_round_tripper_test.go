@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"testing"
 
 	"github.com/jeanmolossi/MaiGo/pkg/httpx"
 	"github.com/jeanmolossi/MaiGo/pkg/httpx/logger"
@@ -16,7 +17,7 @@ import (
 func ExampleLoggerRoundTripper() {
 	base, _ := httpx.NewRoundTripMockBuilder().
 		AddOutcome(httpx.NewResp(200, `{"pong":true}`), nil).
-		Build(nil)
+		Build(new(testing.T))
 
 	rt := httpx.Compose(
 		base,

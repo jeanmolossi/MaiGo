@@ -22,21 +22,39 @@ const (
 	maxReplayBodyBytes   = 64 << 10 // 64KiB
 )
 
+// RetryConfig contains settings for the retry round tripper.
 type RetryConfig struct {
-	MaxAttempts    int
+	// MaxAttempts is the maximum number of times the request will be
+	// attempted. The first attempt counts toward this total.
+	MaxAttempts int
+	// AllowedMethods holds the HTTP methods that may be retried. Methods not
+	// present or set to false are executed without retrying.
 	AllowedMethods map[string]bool
-	ShouldRetry    func(*http.Request, *http.Response, error) bool
-	Backoff        func(attempt int) time.Duration
-	OnRetry        func(ctx context.Context, attempt int, r *http.Request, resp *http.Response, err error, delay time.Duration)
+	// ShouldRetry determines if a request should be retried based on the
+	// received response or error.
+	ShouldRetry func(*http.Request, *http.Response, error) bool
+	// Backoff computes the delay before the next retry attempt.
+	Backoff func(attempt int) time.Duration
+	// OnRetry is invoked before sleeping between retries, giving visibility
+	// into the attempt and computed delay.
+	OnRetry func(ctx context.Context, attempt int, r *http.Request, resp *http.Response, err error, delay time.Duration)
 
+	// IgnoreRetryAfter forces the middleware to ignore Retry-After headers.
 	IgnoreRetryAfter bool
-	MaxRetryAfter    time.Duration
-	AttemptHeader    string
+	// MaxRetryAfter caps the delay derived from a Retry-After header.
+	MaxRetryAfter time.Duration
+	// AttemptHeader is the HTTP header used to store the attempt number.
+	AttemptHeader string
 
+	// MaxReplayBodyBytes limits the size of the request body that will be
+	// kept in memory for replay.
 	MaxReplayBodyBytes int
+	// ReplayBodyStrategy controls how the request body is stored so it can
+	// be replayed on subsequent attempts.
 	ReplayBodyStrategy BodyReplayStrategy
 }
 
+// WithRetry wraps the next RoundTripper with retry logic configured by cfg.
 func WithRetry(cfg RetryConfig) httpx.ChainedRoundTripper {
 	if cfg.MaxAttempts <= 0 {
 		cfg.MaxAttempts = 3
