@@ -31,6 +31,12 @@ jobs:
                   go test -v -cover -coverprofile=coverage.out ./...
                   go tool cover -func=coverage.out
 
+            - name: Extract coverage percentage
+              id: coverage
+              run: |
+                  total=$(go tool cover -func=coverage.out | grep total | awk '{print $3}')
+                  echo "total=$total" >> $GITHUB_OUTPUT
+
             - name: Coverage report
               if: always()
               uses: actions/upload-artifact@master
@@ -38,7 +44,24 @@ jobs:
                   name: coverage-report
                   path: coverage.out
 
+            - name: Run benchmark comparison
+              id: benchmark
+              if: github.event_name == 'pull_request'
+              run: |
+                  go install golang.org/x/perf/cmd/benchstat@latest
+                  git fetch origin ${{ github.base_ref }}
+                  git checkout origin/${{ github.base_ref }}
+                  go test -bench=. -benchmem ./... > benchmark-base.txt
+                  git checkout $GITHUB_SHA
+                  go test -bench=. -benchmem ./... > benchmark-pr.txt
+                  result=$($HOME/go/bin/benchstat benchmark-base.txt benchmark-pr.txt)
+                  echo "$result" | tee benchmark.txt
+                  echo "result<<EOF" >> $GITHUB_OUTPUT
+                  echo "$result" >> $GITHUB_OUTPUT
+                  echo "EOF" >> $GITHUB_OUTPUT
+
             - name: Run benchmarks
+              if: github.event_name != 'pull_request'
               run: |
                   go test -bench=. -benchmem ./... > benchmark.txt
 
@@ -47,3 +70,30 @@ jobs:
               with:
                   name: benchmark-report
                   path: benchmark.txt
+
+            - name: Post PR summary
+              if: github.event_name == 'pull_request'
+              uses: actions/github-script@v6
+              env:
+                  COVERAGE: ${{ steps.coverage.outputs.total }}
+                  BENCH: ${{ steps.benchmark.outputs.result }}
+              with:
+                  script: |
+                      const body = `### Coverage\n${process.env.COVERAGE}\n\n### Benchmark\n\u0060\u0060\u0060\n${process.env.BENCH}\n\u0060\u0060\u0060`;
+                      github.rest.issues.createComment({
+                          issue_number: context.issue.number,
+                          owner: context.repo.owner,
+                          repo: context.repo.repo,
+                          body
+                      });
+
+            - name: Workflow summary
+              if: github.event_name == 'pull_request'
+              run: |
+                  echo "### Coverage" >> $GITHUB_STEP_SUMMARY
+                  echo "${{ steps.coverage.outputs.total }}" >> $GITHUB_STEP_SUMMARY
+                  echo "" >> $GITHUB_STEP_SUMMARY
+                  echo "### Benchmark" >> $GITHUB_STEP_SUMMARY
+                  echo '```' >> $GITHUB_STEP_SUMMARY
+                  echo "${{ steps.benchmark.outputs.result }}" >> $GITHUB_STEP_SUMMARY
+                  echo '```' >> $GITHUB_STEP_SUMMARY
