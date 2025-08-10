@@ -9,7 +9,7 @@ on:
 jobs:
     build-and-test:
         permissions:
-            contents: write
+            contents: read
             pull-requests: write
         runs-on: ubuntu-latest
         strategy:
@@ -36,7 +36,7 @@ jobs:
 
             - name: Run tests and coverage
               run: |
-                  go test -v -cover -coverprofile=coverage.out ./...
+                  go test -v -race -covermode=atomic -coverprofile=coverage.out ./...
 
             - name: Extract coverage percentage
               id: coverage
@@ -45,11 +45,12 @@ jobs:
                   echo "total=$total" >> $GITHUB_OUTPUT
 
             - name: Coverage report
-              if: always()
+              if: always() && hashFiles('coverage.out') != ''
               uses: actions/upload-artifact@v4
               with:
                   name: coverage-report
                   path: coverage.out
+                  if-no-files-found: ignore
 
             - name: Run benchmark comparison
               id: benchmark
@@ -73,10 +74,31 @@ jobs:
                   go test -run=^$ -bench=. -benchmem ./... > benchmark.txt
 
             - name: Benchmark report
+              if: hashFiles('benchmark.txt') != ''
               uses: actions/upload-artifact@v4
               with:
                   name: benchmark-report
                   path: benchmark.txt
+                  if-no-files-found: ignore
+
+            - name: Generate Markdown report
+              if: github.event_name == 'pull_request'
+              run: |
+                  echo "### Coverage" > report.md
+                  echo "${{ steps.coverage.outputs.total }}" >> report.md
+                  echo "" >> report.md
+                  echo "### Benchmark" >> report.md
+                  echo '```' >> report.md
+                  echo "${{ steps.benchmark.outputs.result }}" >> report.md
+                  echo '```' >> report.md
+
+            - name: Upload Markdown report
+              if: github.event_name == 'pull_request' && hashFiles('report.md') != ''
+              uses: actions/upload-artifact@v4
+              with:
+                  name: markdown-report
+                  path: report.md
+                  if-no-files-found: ignore
 
             - name: Post PR summary
               if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
@@ -87,13 +109,29 @@ jobs:
                   BENCH: ${{ steps.benchmark.outputs.result }}
               with:
                   script: |
-                      const body = `### Coverage\n${process.env.COVERAGE}\n\n### Benchmark\n\u0060\u0060\u0060\n${process.env.BENCH}\n\u0060\u0060\u0060`;
-                      github.rest.issues.createComment({
+                      const marker = '<!-- maigo-ci-report -->';
+                      const body = `${marker}\n### Coverage\n${process.env.COVERAGE}\n\n### Benchmark\n\u0060\u0060\u0060\n${process.env.BENCH}\n\u0060\u0060\u0060`;
+                      const { data: comments } = await github.rest.issues.listComments({
                           issue_number: context.issue.number,
                           owner: context.repo.owner,
                           repo: context.repo.repo,
-                          body
                       });
+                      const existing = comments.find(c => c.body.includes(marker));
+                      if (existing) {
+                          await github.rest.issues.updateComment({
+                              comment_id: existing.id,
+                              owner: context.repo.owner,
+                              repo: context.repo.repo,
+                              body,
+                          });
+                      } else {
+                          await github.rest.issues.createComment({
+                              issue_number: context.issue.number,
+                              owner: context.repo.owner,
+                              repo: context.repo.repo,
+                              body,
+                          });
+                      }
 
             - name: Workflow summary
               if: github.event_name == 'pull_request'
