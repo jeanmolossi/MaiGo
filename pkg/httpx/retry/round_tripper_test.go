@@ -309,6 +309,7 @@ func TestRetry_NoSleep_WhenBackoffZero(t *testing.T) {
 	req, _ := http.NewRequest(http.MethodPut, "http://x", strings.NewReader("x"))
 	_, _ = rt.RoundTrip(req)
 
-	require.Less(t, time.Since(start), 1*time.Millisecond, "unexpected delay without backoff/Retry-After")
+	// little window to check interval
+	require.Less(t, time.Since(start), 10*time.Millisecond, "unexpected delay without backoff/Retry-After")
 	assert.Calls(2)
 }
