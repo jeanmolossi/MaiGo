@@ -176,12 +176,14 @@ func defaultShouldRetry(_ *http.Request, resp *http.Response, err error) bool {
 		}
 
 		msg := strings.ToLower(err.Error())
-		if strings.Contains(msg, "connection reset") || strings.Contains(msg, "broken pipe") ||
-			strings.Contains(msg, "refused") || strings.Contains(msg, "unexpected eof") {
+		if strings.Contains(msg, "connection reset") ||
+			strings.Contains(msg, "broken pipe") ||
+			strings.Contains(msg, "refused") ||
+			strings.Contains(msg, "unexpected eof") {
 			return true
 		}
 
-		return true // ??
+		return false
 	}
 
 	if resp == nil {
