@@ -34,7 +34,7 @@ func TestRetry_ReplaysSmallBody_AndSetsAttemptHeader(t *testing.T) {
 
 	rt := WithRetry(cfg)(base)
 
-	req, _ := http.NewRequest(http.MethodPost, "http://x", bytes.NewBufferString("hello"))
+	req, _ := http.NewRequest(http.MethodPut, "http://x", bytes.NewBufferString("hello"))
 	req.Header = make(http.Header)
 	req = req.WithContext(context.Background())
 
@@ -82,7 +82,7 @@ func TestRetry_RespectsRetryAfter_WithCap(t *testing.T) {
 
 	rt := WithRetry(cfg)(base)
 
-	req, _ := http.NewRequest(http.MethodPost, "http://x", bytes.NewBufferString("a"))
+	req, _ := http.NewRequest(http.MethodPut, "http://x", bytes.NewBufferString("a"))
 
 	_, err := rt.RoundTrip(req)
 	require.NoError(t, err, "unexpected: %v", err)
@@ -120,7 +120,7 @@ func TestRetry_IgnoreRetryAfter(t *testing.T) {
 
 	rt := WithRetry(cfg)(base)
 
-	req, _ := http.NewRequest(http.MethodPost, "http://x", bytes.NewBufferString("a"))
+	req, _ := http.NewRequest(http.MethodPut, "http://x", bytes.NewBufferString("a"))
 
 	_, err := rt.RoundTrip(req)
 	require.NoError(t, err, "unexpected: %v", err)
@@ -201,7 +201,7 @@ func TestRetry_AttemptHeaderSequence(t *testing.T) {
 
 	rt := WithRetry(cfg)(base)
 
-	req, _ := http.NewRequest(http.MethodPost, "http://x", strings.NewReader("k"))
+	req, _ := http.NewRequest(http.MethodPut, "http://x", strings.NewReader("k"))
 	_, _ = rt.RoundTrip(req)
 
 	assert.SeenHeadersLen(2, "expected two attempts with headers recorded")
@@ -237,7 +237,7 @@ func TestRetry_parseRetryAfter_SecondsAndDate(t *testing.T) {
 		}
 		rt := WithRetry(cfg)(base)
 
-		req, _ := http.NewRequest(http.MethodPost, "http://x", strings.NewReader("a"))
+		req, _ := http.NewRequest(http.MethodPut, "http://x", strings.NewReader("a"))
 		_, _ = rt.RoundTrip(req)
 
 		require.Len(t, delays, 1, "Retry-After seconds not respected: %#v", delays)
@@ -274,7 +274,7 @@ func TestRetry_parseRetryAfter_SecondsAndDate(t *testing.T) {
 
 		rt := WithRetry(cfg)(base)
 
-		req, _ := http.NewRequest(http.MethodPost, "http://x", strings.NewReader("a"))
+		req, _ := http.NewRequest(http.MethodPut, "http://x", strings.NewReader("a"))
 		_, _ = rt.RoundTrip(req)
 
 		require.Len(t, delays, 1)
