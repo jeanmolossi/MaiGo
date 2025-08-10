@@ -10,25 +10,41 @@ import (
 	"github.com/jeanmolossi/MaiGo/pkg/httpx"
 )
 
+// maxLogBodySize limits how many bytes from request and response bodies are logged.
+// Excess data is truncated to avoid overwhelming the logs.
 const maxLogBodySize = 65536 // 64KiB
 
+// LoggerHooks configures the behaviour of the logging round tripper.
 type LoggerHooks struct {
+	// Logger used to emit the log messages. Defaults to NewConsole when nil.
 	Logger Logger
 
+	// OnStart is called before the request is sent.
 	OnStart func(ctx context.Context, r *http.Request)
-	OnEnd   func(ctx context.Context, r *http.Request, res *http.Response, err error)
+	// OnEnd is called after the response is received or an error occurs.
+	OnEnd func(ctx context.Context, r *http.Request, res *http.Response, err error)
 
+	// ReqBodyTransformerFn allows the request body to be transformed before being logged.
+	// When nil, request bodies are omitted from logs for safety reasons.
 	ReqBodyTransformerFn func(ctx context.Context) func([]byte) []byte
+	// ResBodyTransformerFn allows the response body to be transformed before being logged.
+	// When nil, response bodies are omitted from logs for safety reasons.
 	ResBodyTransformerFn func(ctx context.Context) func([]byte) []byte
 
+	// StartMessage is the message emitted when the request starts.
 	StartMessage string
-	EndMessage   string
+	// EndMessage is the message emitted when the request ends.
+	EndMessage string
 
-	LogStart      bool
-	LogEnd        bool
+	// LogStart defines whether a start log entry should be emitted.
+	LogStart bool
+	// LogEnd defines whether an end log entry should be emitted.
+	LogEnd bool
+	// SupressErrors avoids logging internal errors while processing hooks.
 	SupressErrors bool
 }
 
+// reqTx resolves the request body transformer for the given context.
 func (h LoggerHooks) reqTx(ctx context.Context) func([]byte) []byte {
 	if h.ReqBodyTransformerFn != nil {
 		return h.ReqBodyTransformerFn(ctx)
@@ -38,6 +54,7 @@ func (h LoggerHooks) reqTx(ctx context.Context) func([]byte) []byte {
 	return func(b []byte) []byte { return make([]byte, 0) }
 }
 
+// resTx resolves the response body transformer for the given context.
 func (h LoggerHooks) resTx(ctx context.Context) func([]byte) []byte {
 	if h.ResBodyTransformerFn != nil {
 		return h.ResBodyTransformerFn(ctx)
@@ -47,6 +64,9 @@ func (h LoggerHooks) resTx(ctx context.Context) func([]byte) []byte {
 	return func(b []byte) []byte { return make([]byte, 0) }
 }
 
+// LoggerRoundTripper creates a middleware that logs HTTP requests and responses
+// using the provided hooks. It can be composed with other round trippers using
+// httpx.Compose.
 func LoggerRoundTripper(h LoggerHooks) httpx.ChainedRoundTripper {
 	if h.Logger == nil {
 		h.Logger = NewConsole()
