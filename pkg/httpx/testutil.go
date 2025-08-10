@@ -70,7 +70,12 @@ func (r *RoundTripMockBuilder) AddOutcome(res *http.Response, err error) *RoundT
 }
 
 func (r *RoundTripMockBuilder) Build(t *testing.T) (http.RoundTripper, Assert) {
+	if t == nil {
+		return r.mock, Assert{}
+	}
+
 	t.Helper()
+
 	return r.mock, Assert{mock: r.mock, t: t}
 }
 
