@@ -39,20 +39,33 @@ func (r *RequestQueryBuilder) AddParams(params contracts.Params) contracts.Reque
 
 // AddRawString implements contracts.BuilderRequestQuery.
 func (r *RequestQueryBuilder) AddRawString(raw string) contracts.RequestBuilder {
-	actual := r.config.searchParams.Encode()
-
-	if actual == "" {
-		r.SetRawString(raw)
+	raw = strings.TrimSpace(raw)
+	if raw == "" {
 		return r.parent
 	}
 
-	var err error
+	raw = trimQueryPrefix(raw)
 
-	raw = "&" + trimQueryPrefix(raw)
+	const maxQueryLen = 8 << 10 // 8KiB
+	if len(raw) > maxQueryLen || hasCTL(raw) {
+		r.config.validations.Add(ErrInvalidQuery)
+		return r.parent
+	}
 
-	r.config.searchParams, err = url.ParseQuery(strings.TrimSpace(actual + raw))
+	inc, err := url.ParseQuery(raw)
 	if err != nil {
 		r.config.validations.Add(errors.Join(ErrAddingRawQueryToActualQuery, err))
+		return r.parent
+	}
+
+	if r.config.searchParams == nil {
+		r.config.searchParams = make(url.Values, len(inc))
+	}
+
+	for k, vs := range inc {
+		for _, v := range vs {
+			r.config.searchParams.Add(k, v)
+		}
 	}
 
 	return r.parent
@@ -89,9 +102,21 @@ func (r *RequestQueryBuilder) SetRawString(raw string) contracts.RequestBuilder 
 }
 
 func trimQueryPrefix(q string) string {
-	for _, prefix := range []string{"&", "?"} {
-		q = strings.TrimPrefix(q, prefix)
+	for len(q) > 0 && (q[0] == '?' || q[0] == '&') {
+		q = q[1:]
 	}
 
 	return q
+}
+
+func hasCTL(s string) bool {
+	for _, r := range s {
+		// RFC3986 CTLs out of percent-encoding should be avoided
+		// (0x00-0x1F and 0x7F)
+		if r < 0x20 || r == 0x7f {
+			return true
+		}
+	}
+
+	return false
 }
