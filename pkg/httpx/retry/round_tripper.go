@@ -80,7 +80,7 @@ func WithRetry(cfg RetryConfig) httpx.ChainedRoundTripper {
 
 			cleanup, bodyOK, berr := ensureReopenableBody(req, int64(cfg.MaxReplayBodyBytes), cfg.ReplayBodyStrategy)
 			if berr != nil {
-				return next.RoundTrip(req)
+				return next.RoundTrip(r) // do not retry and use original request
 			}
 
 			if cleanup != nil {
