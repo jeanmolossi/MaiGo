@@ -27,35 +27,33 @@ func ReadAndRestoreBody(body io.ReadCloser, maxSize int) (raw []byte, restored i
 		return nil, http.NoBody, nil
 	}
 
-	//nolint:errcheck // just close body
-	defer body.Close()
-
 	if maxSize <= 0 {
-		return nil, http.NoBody, nil
+		return nil, body, nil
 	}
 
 	maxSize = min(maxSize, MaxSafeBodyCap)
 
-	buf := make([]byte, maxSize+1)
-	n, readErr := io.ReadAtLeast(body, buf[:0], 0)
+	buf := make([]byte, maxSize)
+	n, rerr := io.ReadFull(body, buf)
 
-	if n == 0 && readErr == io.ErrUnexpectedEOF {
-		readErr = nil
+	switch {
+	case rerr == nil:
+	case errors.Is(rerr, io.ErrUnexpectedEOF) || errors.Is(err, io.EOF):
+		buf = buf[:n]
+	default:
+		return nil, nil, rerr
 	}
 
-	if readErr != nil && !errors.Is(readErr, io.EOF) {
-		return nil, nil, readErr
+	// our readClose will restore original body with the read bytes and the rest of original body
+	rc := &readClose{
+		Reader: io.MultiReader(bytes.NewReader(buf), body),
+		Closer: body, // closes original body
 	}
 
-	n = min(n, maxSize)
+	return buf, rc, nil
+}
 
-	b := buf[:n]
-
-	rc := io.NopCloser(bytes.NewReader(b))
-
-	if n > maxSize {
-		return b, rc, ErrBodyTruncated
-	}
-
-	return b, rc, nil
+type readClose struct {
+	io.Reader
+	io.Closer
 }

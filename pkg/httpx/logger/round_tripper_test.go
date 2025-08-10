@@ -4,7 +4,9 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"io"
 	"net/http"
+	"net/http/httptest"
 	"testing"
 
 	"github.com/jeanmolossi/MaiGo/pkg/httpx"
@@ -152,4 +154,57 @@ func testDoneRequestWithoutHeaders(t *testing.T) {
 	require.Equal(t, http.StatusOK, resp.StatusCode, "expected %s, got %s", "OK", http.StatusText(resp.StatusCode))
 	require.Len(t, log.info, 2, "expected 2 log infos, got %d", len(log.info))
 	require.Len(t, log.errs, 1, "expected empty errors")
+}
+
+func TestLoggerRoundTripper_TruncatesRequestBodyAndLogsSize(t *testing.T) {
+	const maxLogBodySize = 65536 // 64KiB
+
+	// Server reads ALL who client sents and reports how much was received.
+	var received int
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		defer r.Body.Close() //nolint:errcheck
+
+		b, _ := io.ReadAll(r.Body)
+		received = len(b)
+
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte("ok"))
+	}))
+	t.Cleanup(srv.Close)
+
+	// Payload extrapolate max to enforce truncating.
+	payload := bytes.Repeat([]byte("A"), maxLogBodySize+12345)
+
+	var read int
+
+	// Transformers who NOT delete body, else you log empty.
+	hooks := logger.LoggerHooks{
+		LogStart:      true,
+		LogEnd:        true,
+		SupressErrors: true,
+		ReqBodyTransformerFn: func(ctx context.Context) func([]byte) []byte {
+			return func(b []byte) []byte { read = len(b); return b }
+		},
+		ResBodyTransformerFn: func(ctx context.Context) func([]byte) []byte {
+			return func(b []byte) []byte { return b }
+		},
+		StartMessage: "http.client.start",
+		EndMessage:   "http.client.end",
+	}
+
+	// Chain our LogRoundTripper with default transporter
+	rt := logger.LoggerRoundTripper(hooks)(http.DefaultTransport)
+
+	req, err := http.NewRequest(http.MethodPost, srv.URL, bytes.NewReader(payload))
+	require.NoError(t, err)
+
+	resp, err := rt.RoundTrip(req)
+	require.NoError(t, err)
+
+	_ = resp.Body.Close()
+
+	sent := maxLogBodySize + 12345
+	require.Equal(t, sent, received)       // ensure the server received full body
+	require.Equal(t, maxLogBodySize, read) // ensure the log transformer received body truncated
 }
