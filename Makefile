@@ -1,4 +1,4 @@
-.PHONY: all test clean
+.PHONY: all test bench clean
 
 all: test bench
 
