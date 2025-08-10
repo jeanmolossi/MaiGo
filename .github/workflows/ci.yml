@@ -79,22 +79,34 @@ jobs:
                   for (const sec of sections) {
                       if (!sec.includes('benchmark-base.txt')) continue;
                       const lines = sec.split(/\n/).filter(l => l.trim());
-                      if (lines.length < 3) continue;
-                      const h1 = lines[0].split('│').slice(1, -1).map(s => s.trim());
-                      const h2 = lines[1].split('│').slice(1, -1).map(s => s.trim());
-                      const headers = ['Benchmark', `${h1[0]} ${h2[0]}`, `${h1[1]} ${h2[1].replace(/\s+vs base$/, '')}`, 'vs base'];
+                      const start = lines.findIndex(l => l.includes('benchmark-base.txt'));
+                      if (start === -1 || start + 1 >= lines.length) continue;
+                      const h1 = lines[start].split('│').slice(1, -1).map(s => s.trim());
+                      const h2 = lines[start + 1].split('│').slice(1, -1).map(s => s.trim());
+                      const headers = ['Benchmark'];
+                      for (let i = 0; i < Math.min(h1.length, h2.length); i++) {
+                          headers.push(`${h1[i]} ${h2[i].replace(/\s+vs base$/, '')}`.trim());
+                      }
+                      headers.push('vs base');
                       const rows = [];
-                      for (let i = 2; i < lines.length; i++) {
+                      for (let i = start + 2; i < lines.length; i++) {
                           const line = lines[i];
                           if (line.startsWith('¹') || line.startsWith('²')) continue;
                           const parts = line.trim().split(/\s{2,}/).map(s => s.trim());
-                          if (parts.length >= 4) {
-                              rows.push([parts[0], parts[1], parts[2], parts.slice(3).join(' ')]);
+                          if (parts.length >= headers.length - 1) {
+                              const row = [parts[0]];
+                              for (let j = 1; j < headers.length - 1; j++) {
+                                  row.push(parts[j] || '');
+                              }
+                              row.push(parts.slice(headers.length - 1).join(' '));
+                              rows.push(row);
                           }
                       }
-                      let md = `| ${headers.join(' | ')} |\n| ${headers.map(() => '---').join(' | ')} |\n`;
-                      md += rows.map(r => `| ${r.join(' | ')} |`).join('\n');
-                      tables.push(md);
+                      if (rows.length) {
+                          let md = `| ${headers.join(' | ')} |\n| ${headers.map(() => '---').join(' | ')} |\n`;
+                          md += rows.map(r => `| ${r.join(' | ')} |`).join('\n');
+                          tables.push(md);
+                      }
                   }
                   process.stdout.write(tables.join('\n\n'));
                   NODE
