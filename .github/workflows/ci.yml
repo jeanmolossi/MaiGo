@@ -68,6 +68,42 @@ jobs:
                   echo "$result" >> $GITHUB_OUTPUT
                   echo "EOF" >> $GITHUB_OUTPUT
 
+            - name: Format benchmark markdown
+              id: bench-md
+              if: github.event_name == 'pull_request' && steps.benchmark.outputs.result != ''
+              run: |
+                  node <<'NODE' > bench.md
+                  const bench = process.env.BENCH;
+                  const sections = bench.split(/\n\s*\n/);
+                  const tables = [];
+                  for (const sec of sections) {
+                      if (!sec.includes('benchmark-base.txt')) continue;
+                      const lines = sec.split(/\n/).filter(l => l.trim());
+                      if (lines.length < 3) continue;
+                      const h1 = lines[0].split('│').slice(1, -1).map(s => s.trim());
+                      const h2 = lines[1].split('│').slice(1, -1).map(s => s.trim());
+                      const headers = ['Benchmark', `${h1[0]} ${h2[0]}`, `${h1[1]} ${h2[1].replace(/\s+vs base$/, '')}`, 'vs base'];
+                      const rows = [];
+                      for (let i = 2; i < lines.length; i++) {
+                          const line = lines[i];
+                          if (line.startsWith('¹') || line.startsWith('²')) continue;
+                          const parts = line.trim().split(/\s{2,}/).map(s => s.trim());
+                          if (parts.length >= 4) {
+                              rows.push([parts[0], parts[1], parts[2], parts.slice(3).join(' ')]);
+                          }
+                      }
+                      let md = `| ${headers.join(' | ')} |\n| ${headers.map(() => '---').join(' | ')} |\n`;
+                      md += rows.map(r => `| ${r.join(' | ')} |`).join('\n');
+                      tables.push(md);
+                  }
+                  process.stdout.write(tables.join('\n\n'));
+                  NODE
+                  echo "md<<EOF" >> $GITHUB_OUTPUT
+                  cat bench.md >> $GITHUB_OUTPUT
+                  echo "EOF" >> $GITHUB_OUTPUT
+              env:
+                  BENCH: ${{ steps.benchmark.outputs.result }}
+
             - name: Run benchmarks
               if: github.event_name != 'pull_request'
               run: |
@@ -86,11 +122,11 @@ jobs:
               run: |
                   echo "### Coverage" > report.md
                   echo "${{ steps.coverage.outputs.total }}" >> report.md
-                  echo "" >> report.md
-                  echo "### Benchmark" >> report.md
-                  echo '```' >> report.md
-                  echo "${{ steps.benchmark.outputs.result }}" >> report.md
-                  echo '```' >> report.md
+                  if [ -f bench.md ]; then
+                      echo "" >> report.md
+                      echo "### Benchmark" >> report.md
+                      cat bench.md >> report.md
+                  fi
 
             - name: Upload Markdown report
               if: github.event_name == 'pull_request' && hashFiles('report.md') != ''
@@ -106,11 +142,15 @@ jobs:
               uses: actions/github-script@v7
               env:
                   COVERAGE: ${{ steps.coverage.outputs.total }}
-                  BENCH: ${{ steps.benchmark.outputs.result }}
               with:
                   script: |
+                      const fs = require('fs');
                       const marker = '<!-- maigo-ci-report -->';
-                      const body = `${marker}\n### Coverage\n${process.env.COVERAGE}\n\n### Benchmark\n\u0060\u0060\u0060\n${process.env.BENCH}\n\u0060\u0060\u0060`;
+                      let bench = '';
+                      try {
+                          bench = fs.readFileSync('bench.md', 'utf8').trim();
+                      } catch {}
+                      const body = `${marker}\n### Coverage\n${process.env.COVERAGE}\n\n### Benchmark\n${bench}`;
                       const { data: comments } = await github.rest.issues.listComments({
                           issue_number: context.issue.number,
                           owner: context.repo.owner,
@@ -138,8 +178,8 @@ jobs:
               run: |
                   echo "### Coverage" >> $GITHUB_STEP_SUMMARY
                   echo "${{ steps.coverage.outputs.total }}" >> $GITHUB_STEP_SUMMARY
-                  echo "" >> $GITHUB_STEP_SUMMARY
-                  echo "### Benchmark" >> $GITHUB_STEP_SUMMARY
-                  echo '```' >> $GITHUB_STEP_SUMMARY
-                  echo "${{ steps.benchmark.outputs.result }}" >> $GITHUB_STEP_SUMMARY
-                  echo '```' >> $GITHUB_STEP_SUMMARY
+                  if [ -f bench.md ]; then
+                      echo "" >> $GITHUB_STEP_SUMMARY
+                      echo "### Benchmark" >> $GITHUB_STEP_SUMMARY
+                      cat bench.md >> $GITHUB_STEP_SUMMARY
+                  fi
