@@ -5,6 +5,7 @@ type RequestBuilder interface {
 	Body() BuilderRequestBody[RequestBuilder]
 	Retry() BuilderRequestRetry[RequestBuilder]
 	Context() BuilderRequestContext[RequestBuilder]
+	Query() BuilderRequestQuery[RequestBuilder]
 
 	Send() (Response, error)
 }
