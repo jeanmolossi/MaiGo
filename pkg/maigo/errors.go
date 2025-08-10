@@ -13,6 +13,6 @@ var (
 	ErrToMarshalJSON     = errors.New("failed to marshal json")
 	ErrToMarshalXML      = errors.New("failed to marshal xml")
 
-	ErrAddingRawQueryToActualQuery = errors.New("cannot add raw query to actual query")
-	ErrSettingRawQuery             = errors.New("cannot set this string to query")
+	ErrAddingRawQueryToActualQuery = errors.New("cannot merge raw query into current query")
+	ErrSettingRawQuery             = errors.New("cannot parse raw query string")
 )
