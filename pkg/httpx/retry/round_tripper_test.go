@@ -30,8 +30,6 @@ func TestRetry_ReplaysSmallBody_AndSetsAttemptHeader(t *testing.T) {
 		IgnoreRetryAfter:   true,
 		MaxReplayBodyBytes: 64 << 10,
 		ReplayBodyStrategy: ReplayIfSmallElseNoRetry,
-		// AllowedMethods bug: WithRetry só entra no fluxo de retry se AllowedMethods[method] == false.
-		// Portanto, use POST (não está no defaultAllowed) para que o retry ocorra.
 	}
 
 	rt := WithRetry(cfg)(base)
