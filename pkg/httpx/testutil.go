@@ -23,7 +23,7 @@ type roundTripMock struct {
 
 	calls       int
 	seenBodies  []string
-	SeenHeaders []http.Header
+	seenHeaders []http.Header
 }
 
 func (s *roundTripMock) RoundTrip(r *http.Request) (*http.Response, error) {
@@ -37,7 +37,7 @@ func (s *roundTripMock) RoundTrip(r *http.Request) (*http.Response, error) {
 	}
 
 	s.seenBodies = append(s.seenBodies, string(bodyBytes))
-	s.SeenHeaders = append(s.SeenHeaders, r.Header.Clone())
+	s.seenHeaders = append(s.seenHeaders, r.Header.Clone())
 
 	if s.calls >= len(s.outcomes) {
 		s.calls++
@@ -94,11 +94,11 @@ func (a Assert) SeenBodies(callIdx int, expected string, args ...any) {
 }
 
 func (a Assert) SeenHeadersLen(expected int, args ...any) {
-	require.Len(a.t, a.mock.SeenHeaders, expected, args...)
+	require.Len(a.t, a.mock.seenHeaders, expected, args...)
 }
 
-func (a Assert) SeendHeaders(callIdx int, key, expected string, args ...any) {
-	require.Equal(a.t, expected, a.mock.SeenHeaders[callIdx].Get(key), args...)
+func (a Assert) SeenHeaders(callIdx int, key, expected string, args ...any) {
+	require.Equal(a.t, expected, a.mock.seenHeaders[callIdx].Get(key), args...)
 }
 
 // ResponseBuilder

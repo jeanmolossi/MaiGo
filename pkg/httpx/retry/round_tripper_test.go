@@ -51,8 +51,8 @@ func TestRetry_ReplaysSmallBody_AndSetsAttemptHeader(t *testing.T) {
 	assert.SeenBodiesLen(2, "expected to record bodies for 2 attempts")
 	assert.SeenBodies(0, "hello", "body replay mismatch")
 	assert.SeenBodies(1, "hello", "body replay mismatch")
-	assert.SeendHeaders(0, defaultAttemptHeader, "1")
-	assert.SeendHeaders(1, defaultAttemptHeader, "2")
+	assert.SeenHeaders(0, defaultAttemptHeader, "1")
+	assert.SeenHeaders(1, defaultAttemptHeader, "2")
 }
 
 // Respect Retry-After with cap (use POST para entrar no fluxo de retry).
@@ -205,8 +205,8 @@ func TestRetry_AttemptHeaderSequence(t *testing.T) {
 	_, _ = rt.RoundTrip(req)
 
 	assert.SeenHeadersLen(2, "expected two attempts with headers recorded")
-	assert.SeendHeaders(0, defaultAttemptHeader, "1", "attempt header value wanted 1")
-	assert.SeendHeaders(1, defaultAttemptHeader, "2", "attempt header value wanted 2")
+	assert.SeenHeaders(0, defaultAttemptHeader, "1", "attempt header value wanted 1")
+	assert.SeenHeaders(1, defaultAttemptHeader, "2", "attempt header value wanted 2")
 }
 
 // parseRetryAfter sanity (seconds and HTTP-date). Uses OnRetry to read computed delay.
