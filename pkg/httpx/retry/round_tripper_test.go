@@ -39,13 +39,9 @@ func TestRetry_ReplaysSmallBody_AndSetsAttemptHeader(t *testing.T) {
 	req = req.WithContext(context.Background())
 
 	resp, err := rt.RoundTrip(req)
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-
-	if resp == nil || resp.StatusCode != 200 {
-		t.Fatalf("expected final 200, got %#v", resp)
-	}
+	require.NoError(t, err, "unexpected error: %v", err)
+	require.NotNil(t, resp)
+	require.Equal(t, 200, resp.StatusCode, "expected final 200")
 
 	assert.Calls(2, "expected 2 calls (500 then 200)")
 	assert.SeenBodiesLen(2, "expected to record bodies for 2 attempts")
