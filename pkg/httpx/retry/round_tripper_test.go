@@ -245,7 +245,7 @@ func TestRetry_parseRetryAfter_SecondsAndDate(t *testing.T) {
 		assert.Calls(2)
 	}
 
-	// 2) HTTP-date form (now+2s → expect cap/min handled)
+	// 2) HTTP-date form (now+1s → expect cap/min handled)
 	{
 		when := time.Now().Add(1 * time.Second).UTC().Format(http.TimeFormat)
 
