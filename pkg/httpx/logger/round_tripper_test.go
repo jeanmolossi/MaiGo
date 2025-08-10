@@ -105,7 +105,7 @@ func testFailingRequest(t *testing.T) {
 	next, _ := httpx.NewRoundTripMockBuilder().
 		AddOutcome(
 			httpx.NewResponseBuilder(500, `{}`).
-				SetHeader("Content-Length", "0").
+				SetHeader("Content-Length", "0"). // proposital content different from body
 				Build(),
 			errors.New("request error"),
 		).
