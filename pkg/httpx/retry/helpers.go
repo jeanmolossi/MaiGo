@@ -39,7 +39,7 @@ func ensureReopenableBody(r *http.Request, capMem int64, strat BodyReplayStrateg
 		err = cerr
 	}
 
-	if err != nil && !errors.Is(err, io.EOF) {
+	if err != nil && !errors.Is(err, io.EOF) && !errors.Is(err, io.ErrUnexpectedEOF) {
 		return nil, false, err
 	}
 
