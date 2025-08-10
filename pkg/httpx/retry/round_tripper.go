@@ -96,7 +96,7 @@ func WithRetry(cfg RetryConfig) httpx.ChainedRoundTripper {
 
 			for attempt := 1; attempt <= cfg.MaxAttempts; attempt++ {
 				// renew context
-				req := req.WithContext(r.Context())
+				req = req.WithContext(r.Context())
 
 				// retry attempt header
 				req.Header.Set(cfg.AttemptHeader, strconv.FormatUint(uint64(attempt), 10))
