@@ -72,7 +72,7 @@ func WithRetry(cfg RetryConfig) httpx.ChainedRoundTripper {
 
 	return func(next http.RoundTripper) http.RoundTripper {
 		return httpx.RoundTripperFn(func(r *http.Request) (*http.Response, error) {
-			if allowed, ok := cfg.AllowedMethods[strings.ToUpper(r.Method)]; ok && !allowed {
+			if allowed, ok := cfg.AllowedMethods[strings.ToUpper(r.Method)]; !ok || !allowed {
 				return next.RoundTrip(r)
 			}
 
