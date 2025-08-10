@@ -20,7 +20,7 @@ type roundTripMock struct {
 
 func (s *roundTripMock) RoundTrip(r *http.Request) (*http.Response, error) {
 	i := atomic.AddInt32(&s.idx, 1) - 1
-	if int(i) > len(s.outcomes) {
+	if int(i) >= len(s.outcomes) {
 		i = int32(len(s.outcomes) - 1)
 	}
 
