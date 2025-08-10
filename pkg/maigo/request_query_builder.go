@@ -10,6 +10,8 @@ import (
 
 var _ contracts.BuilderRequestQuery[contracts.RequestBuilder] = (*RequestQueryBuilder)(nil)
 
+const maxQueryLen = 8 << 10 // 8KiB
+
 type RequestQueryBuilder struct {
 	parent *RequestBuilder
 	config *RequestConfigBase
@@ -46,9 +48,8 @@ func (r *RequestQueryBuilder) AddRawString(raw string) contracts.RequestBuilder 
 
 	raw = trimQueryPrefix(raw)
 
-	const maxQueryLen = 8 << 10 // 8KiB
 	if len(raw) > maxQueryLen || hasCTL(raw) {
-		r.config.validations.Add(ErrInvalidQuery)
+		r.config.validations.Add(ErrInvalidQueryString)
 		return r.parent
 	}
 
@@ -94,6 +95,11 @@ func (r *RequestQueryBuilder) SetRawString(raw string) contracts.RequestBuilder 
 	}
 
 	raw = trimQueryPrefix(raw)
+
+	if len(raw) > maxQueryLen || hasCTL(raw) {
+		r.config.validations.Add(ErrInvalidQueryString)
+		return r.parent
+	}
 
 	newSearchParams, err := url.ParseQuery(raw)
 	if err != nil {

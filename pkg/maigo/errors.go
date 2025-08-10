@@ -15,5 +15,5 @@ var (
 
 	ErrAddingRawQueryToActualQuery = errors.New("cannot merge raw query into current query")
 	ErrSettingRawQuery             = errors.New("cannot parse raw query string")
-	ErrInvalidQuery                = errors.New("invalid query")
+	ErrInvalidQueryString          = errors.New("invalid query")
 )
