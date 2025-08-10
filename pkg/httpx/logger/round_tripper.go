@@ -97,7 +97,7 @@ func LoggerRoundTripper(h LoggerHooks) httpx.ChainedRoundTripper {
 			}
 
 			resp, err := next.RoundTrip(req)
-			elaped := time.Since(start)
+			elapsed := time.Since(start)
 
 			var rawResBody []byte
 
@@ -133,7 +133,7 @@ func LoggerRoundTripper(h LoggerHooks) httpx.ChainedRoundTripper {
 			attrs = append(attrs,
 				slog.Int("status", status),
 				slog.Int("content_length", cl),
-				slog.String("elapsed_ms", strconv.FormatInt(elaped.Milliseconds(), 10)),
+				slog.String("elapsed_ms", strconv.FormatInt(elapsed.Milliseconds(), 10)),
 			)
 
 			if len(rawReqBody) > 0 {
