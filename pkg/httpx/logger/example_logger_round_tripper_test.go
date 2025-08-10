@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"testing"
 
 	"github.com/jeanmolossi/MaiGo/pkg/httpx"
 	"github.com/jeanmolossi/MaiGo/pkg/httpx/logger"
@@ -14,10 +15,12 @@ import (
 // with a transport. It logs request/response metadata and returns the mocked
 // response from the builder.
 func ExampleLoggerRoundTripper() {
+	base, _ := httpx.NewRoundTripMockBuilder().
+		AddOutcome(httpx.NewResp(200, `{"pong":true}`), nil).
+		Build(new(testing.T))
+
 	rt := httpx.Compose(
-		httpx.NewRoundTripMockBuilder().
-			AddOutcome(httpx.NewResp(200, `{"pong":true}`), nil).
-			Build(),
+		base,
 		logger.LoggerRoundTripper(logger.LoggerHooks{
 			Logger:   logger.NewNoop(),
 			LogStart: true,

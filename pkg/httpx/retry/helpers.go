@@ -10,11 +10,19 @@ import (
 	"time"
 )
 
+// BodyReplayStrategy defines how request bodies are preserved so they can be
+// resent on a retry attempt.
 type BodyReplayStrategy int
 
 const (
+	// ReplayIfSmallElseNoRetry buffers small bodies in memory. If the body
+	// exceeds the configured limit the request will not be retried.
 	ReplayIfSmallElseNoRetry BodyReplayStrategy = iota // secure default
+	// ReplayIfSmallElseSpillToDisk buffers small bodies in memory and
+	// spills larger ones to a temporary file so the request can be retried.
 	ReplayIfSmallElseSpillToDisk
+	// NoReplay disables body replay entirely; requests with bodies are not
+	// retried.
 	NoReplay
 )
 

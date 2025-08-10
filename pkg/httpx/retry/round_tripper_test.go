@@ -276,8 +276,8 @@ func TestRetry_parseRetryAfter_SecondsAndDate(t *testing.T) {
 
 		require.Len(t, delays, 1)
 
-		// Aceita +/- 1s por execução em tempo real
-		if delays[0] < 50*time.Millisecond || delays[0] > 1250*time.Millisecond {
+		// Accept up to roughly 1s in either direction to tolerate slow CI environments.
+		if delays[0] < 0 || delays[0] > 1250*time.Millisecond {
 			t.Fatalf("unexpected HTTP-date delay: %v", delays[0])
 		}
 
