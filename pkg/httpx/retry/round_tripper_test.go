@@ -87,7 +87,7 @@ func TestRetry_RespectsRetryAfter_WithCap(t *testing.T) {
 	_, err := rt.RoundTrip(req)
 	require.NoError(t, err, "unexpected: %v", err)
 	require.Len(t, observedDelay, 1, "expected exactly one retry delay observed, got %d", len(observedDelay))
-	require.Equal(t, 50*time.Millisecond, observedDelay[0], "expected delay caped to 50ms, got %v", observedDelay[0])
+	require.Equal(t, 50*time.Millisecond, observedDelay[0], "expected delay capped to 50ms, got %v", observedDelay[0])
 	assert.Calls(2)
 }
 
