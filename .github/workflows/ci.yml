@@ -15,10 +15,12 @@ jobs:
 
         steps:
             - name: Checkout
-              uses: actions/checkout@master
+              uses: actions/checkout@v4
+              with:
+                  fetch-depth: 0
 
             - name: Setup go
-              uses: actions/setup-go@master
+              uses: actions/setup-go@v5
               with:
                   go-version: ${{ matrix.go-version }}
                   cache-dependency-path: go.sum
@@ -26,10 +28,12 @@ jobs:
             - name: Install deps
               run: go mod download
 
+            - name: Run vet
+              run: go vet ./...
+
             - name: Run tests and coverage
               run: |
                   go test -v -cover -coverprofile=coverage.out ./...
-                  go tool cover -func=coverage.out
 
             - name: Extract coverage percentage
               id: coverage
@@ -39,7 +43,7 @@ jobs:
 
             - name: Coverage report
               if: always()
-              uses: actions/upload-artifact@master
+              uses: actions/upload-artifact@v4
               with:
                   name: coverage-report
                   path: coverage.out
@@ -51,9 +55,9 @@ jobs:
                   go install golang.org/x/perf/cmd/benchstat@latest
                   git fetch origin ${{ github.base_ref }}
                   git checkout origin/${{ github.base_ref }}
-                  go test -bench=. -benchmem ./... > benchmark-base.txt
+                  go test -run=^$ -bench=. -benchmem ./... > benchmark-base.txt
                   git checkout $GITHUB_SHA
-                  go test -bench=. -benchmem ./... > benchmark-pr.txt
+                  go test -run=^$ -bench=. -benchmem ./... > benchmark-pr.txt
                   result=$($HOME/go/bin/benchstat benchmark-base.txt benchmark-pr.txt)
                   echo "$result" | tee benchmark.txt
                   echo "result<<EOF" >> $GITHUB_OUTPUT
@@ -63,17 +67,17 @@ jobs:
             - name: Run benchmarks
               if: github.event_name != 'pull_request'
               run: |
-                  go test -bench=. -benchmem ./... > benchmark.txt
+                  go test -run=^$ -bench=. -benchmem ./... > benchmark.txt
 
             - name: Benchmark report
-              uses: actions/upload-artifact@master
+              uses: actions/upload-artifact@v4
               with:
                   name: benchmark-report
                   path: benchmark.txt
 
             - name: Post PR summary
               if: github.event_name == 'pull_request'
-              uses: actions/github-script@v6
+              uses: actions/github-script@v7
               env:
                   COVERAGE: ${{ steps.coverage.outputs.total }}
                   BENCH: ${{ steps.benchmark.outputs.result }}
