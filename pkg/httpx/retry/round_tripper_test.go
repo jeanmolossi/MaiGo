@@ -159,7 +159,7 @@ func TestRetry_BodyTooBig_NoRetry_WhenNoSpill(t *testing.T) {
 	resp, err := rt.RoundTrip(req)
 	require.NoError(t, err, "unexpected error: %v", err)
 	require.Equal(t, 500, resp.StatusCode, "expected response 500, got %d", resp.StatusCode)
-	assert.Calls(1, "expected 2 call (should not retry with large body and no spill)")
+	assert.Calls(1, "expected 1 call (should not retry with large body and no spill)")
 }
 
 func TestRetry_AllowedMethods_RetryOnGET(t *testing.T) {
