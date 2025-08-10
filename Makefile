@@ -7,8 +7,8 @@ test:
 	go tool cover -html=.coverage.out -o coverage.html
 
 bench:
-	go test -bench=. -benchmem ./... > benchmark.txt
+	go test -run=^$$ -count=1 -bench=. -benchmem ./... > benchmark.txt
 
 clean:
 	@rm -f .coverage.out coverage.html
-	@rm -f benchmark.txt
+	@rm -f benchmark.*
