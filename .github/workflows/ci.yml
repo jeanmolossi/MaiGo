@@ -9,7 +9,9 @@ on:
 jobs:
     test:
         permissions:
-            contents: read
+            contents: write
+            pull-requests: write
+            issues: write
         runs-on: ubuntu-latest
         strategy:
             matrix:
@@ -92,6 +94,41 @@ jobs:
                   name: coverage-report
                   path: coverage.out
                   if-no-files-found: ignore
+
+            - name: Post coverage comment
+              if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+              continue-on-error: true
+              uses: actions/github-script@v7
+              env:
+                  COVERAGE_TABLE: ${{ steps.coverage.outputs.md }}
+                  COVERAGE_TOTAL: ${{ steps.coverage.outputs.total }}
+              with:
+                  script: |
+                      const marker = '<!-- maigo-ci-report -->';
+                      const coverage = process.env.COVERAGE_TABLE;
+                      const total = process.env.COVERAGE_TOTAL;
+                      const body = `${marker}\n### Coverage (${total})\n${coverage}`;
+                      const { data: comments } = await github.rest.issues.listComments({
+                          issue_number: context.issue.number,
+                          owner: context.repo.owner,
+                          repo: context.repo.repo,
+                      });
+                      const existing = comments.find(c => c.body.includes(marker));
+                      if (existing) {
+                          await github.rest.issues.updateComment({
+                              comment_id: existing.id,
+                              owner: context.repo.owner,
+                              repo: context.repo.repo,
+                              body,
+                          });
+                      } else {
+                          await github.rest.issues.createComment({
+                              issue_number: context.issue.number,
+                              owner: context.repo.owner,
+                              repo: context.repo.repo,
+                              body,
+                          });
+                      }
 
     benchmark:
         needs: test
