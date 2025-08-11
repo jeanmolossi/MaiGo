@@ -16,6 +16,7 @@ jobs:
                 go-version: [stable]
         outputs:
             coverage: ${{ steps.coverage.outputs.total }}
+            coverage_table: ${{ steps.coverage.outputs.md }}
 
         steps:
             - name: Checkout
@@ -35,15 +36,54 @@ jobs:
             - name: Run vet
               run: go vet ./...
 
+            - name: Run base tests and coverage
+              if: github.event_name == 'pull_request'
+              run: |
+                  git fetch origin ${{ github.base_ref }}
+                  git checkout origin/${{ github.base_ref }}
+                  go test -race -covermode=atomic -coverprofile=coverage-base.out ./... 2>&1 | tee coverage-base.txt
+                  git checkout $GITHUB_SHA
+
             - name: Run tests and coverage
               run: |
-                  go test -v -race -covermode=atomic -coverprofile=coverage.out ./...
+                  go test -v -race -covermode=atomic -coverprofile=coverage.out ./... 2>&1 | tee coverage.txt
 
-            - name: Extract coverage percentage
+            - name: Extract coverage data
               id: coverage
               run: |
+                  node <<'NODE'
+                  const fs = require('fs');
+                  function parse(file){
+                      const lines = fs.readFileSync(file,'utf8').split(/\n/);
+                      const m={};
+                      for(const l of lines){
+                          const r = l.match(/(?:\s|^)(?:ok\s+)?(\S+)\s+.*coverage:\s+([0-9.]+)%/);
+                          if(r) m[r[1]] = parseFloat(r[2]);
+                      }
+                      return m;
+                  }
+                  const curr = parse('coverage.txt');
+                  let base = {};
+                  if (fs.existsSync('coverage-base.txt')) base = parse('coverage-base.txt');
+                  const pkgs = Object.keys(curr).sort();
+                  let table = '| package | percentage | stats |\n| --- | --- | --- |\n';
+                  for (const p of pkgs) {
+                      const pct = curr[p];
+                      let stats = '';
+                      if (base[p] !== undefined) {
+                          const diff = pct - base[p];
+                          stats = (diff >= 0 ? '+' : '') + diff.toFixed(1) + '%';
+                      }
+                      table += `| ${p} | ${pct.toFixed(1)}% | ${stats} |\n`;
+                  }
+                  fs.writeFileSync('coverage.md', table);
+                  console.log(table);
+                  NODE
                   total=$(go tool cover -func=coverage.out | grep total | awk '{print $3}')
                   echo "total=$total" >> $GITHUB_OUTPUT
+                  echo "md<<EOF" >> $GITHUB_OUTPUT
+                  cat coverage.md >> $GITHUB_OUTPUT
+                  echo "EOF" >> $GITHUB_OUTPUT
 
             - name: Coverage report
               if: always() && hashFiles('coverage.out') != ''
@@ -160,7 +200,7 @@ jobs:
               if: github.event_name == 'pull_request'
               run: |
                   echo "### Coverage" > report.md
-                  echo "${{ needs.test.outputs.coverage }}" >> report.md
+                  echo "${{ needs.test.outputs.coverage_table }}" >> report.md
                   if [ -f bench.md ]; then
                       echo "" >> report.md
                       echo "### Benchmark" >> report.md
@@ -180,7 +220,7 @@ jobs:
               continue-on-error: true
               uses: actions/github-script@v7
               env:
-                  COVERAGE: ${{ needs.test.outputs.coverage }}
+                  COVERAGE: ${{ needs.test.outputs.coverage_table }}
               with:
                   script: |
                       const fs = require('fs');
@@ -216,7 +256,7 @@ jobs:
               if: github.event_name == 'pull_request'
               run: |
                   echo "### Coverage" >> $GITHUB_STEP_SUMMARY
-                  echo "${{ needs.test.outputs.coverage }}" >> $GITHUB_STEP_SUMMARY
+                  echo "${{ needs.test.outputs.coverage_table }}" >> $GITHUB_STEP_SUMMARY
                   if [ -f bench.md ]; then
                       echo "" >> $GITHUB_STEP_SUMMARY
                       echo "### Benchmark" >> $GITHUB_STEP_SUMMARY
