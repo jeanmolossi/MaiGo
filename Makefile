@@ -1,4 +1,5 @@
-.PHONY: all test bench clean
+
+.PHONY: all test bench clean unit-test tests
 
 all: test bench
 
@@ -12,3 +13,7 @@ bench:
 clean:
 	@rm -f .coverage.out coverage.html
 	@rm -f benchmark.*
+
+unit-test tests:
+	go test -coverprofile=coverage.out ./...
+	go tool cover -func=coverage.out

@@ -7,18 +7,27 @@ on:
         branches: ["main"]
 
 jobs:
-    build-and-test:
+    test:
+        permissions:
+            contents: write
+            pull-requests: write
+            issues: write
         runs-on: ubuntu-latest
         strategy:
             matrix:
                 go-version: [stable]
+        outputs:
+            coverage: ${{ steps.coverage.outputs.total }}
+            coverage_table: ${{ steps.coverage.outputs.md }}
 
         steps:
             - name: Checkout
-              uses: actions/checkout@master
+              uses: actions/checkout@v4
+              with:
+                  fetch-depth: 0
 
             - name: Setup go
-              uses: actions/setup-go@master
+              uses: actions/setup-go@v5
               with:
                   go-version: ${{ matrix.go-version }}
                   cache-dependency-path: go.sum
@@ -26,24 +35,270 @@ jobs:
             - name: Install deps
               run: go mod download
 
+            - name: Run vet
+              run: go vet ./...
+
+            - name: Run base tests and coverage
+              if: github.event_name == 'pull_request'
+              run: |
+                  git fetch origin ${{ github.base_ref }}
+                  git checkout origin/${{ github.base_ref }}
+                  go test -race -covermode=atomic -coverprofile=coverage-base.out ./... 2>&1 | tee coverage-base.txt
+                  git checkout $GITHUB_SHA
+
             - name: Run tests and coverage
               run: |
-                  go test -v -cover -coverprofile=coverage.out ./...
-                  go tool cover -func=coverage.out
+                  go test -v -race -covermode=atomic -coverprofile=coverage.out ./... 2>&1 | tee coverage.txt
+
+            - name: Extract coverage data
+              id: coverage
+              run: |
+                  node <<'NODE'
+                  const fs = require('fs');
+                  function parse(file){
+                      const lines = fs.readFileSync(file,'utf8').split(/\n/);
+                      const m={};
+                      for(const l of lines){
+                          const r = l.match(/(?:\s|^)(?:ok\s+)?(\S+)\s+.*coverage:\s+([0-9.]+)%/);
+                          if(r) m[r[1]] = parseFloat(r[2]);
+                      }
+                      return m;
+                  }
+                  const curr = parse('coverage.txt');
+                  let base = {};
+                  if (fs.existsSync('coverage-base.txt')) base = parse('coverage-base.txt');
+                  const pkgs = Object.keys(curr).sort();
+                  let table = '| package | percentage | stats |\n| --- | --- | --- |\n';
+                  for (const p of pkgs) {
+                      const pct = curr[p];
+                      let stats = '';
+                      if (base[p] !== undefined) {
+                          const diff = pct - base[p];
+                          stats = (diff >= 0 ? '+' : '') + diff.toFixed(1) + '%';
+                      }
+                      table += `| ${p} | ${pct.toFixed(1)}% | ${stats} |\n`;
+                  }
+                  fs.writeFileSync('coverage.md', table);
+                  console.log(table);
+                  NODE
+                  total=$(go tool cover -func=coverage.out | grep total | awk '{print $3}')
+                  echo "total=$total" >> $GITHUB_OUTPUT
+                  echo "md<<EOF" >> $GITHUB_OUTPUT
+                  cat coverage.md >> $GITHUB_OUTPUT
+                  echo "EOF" >> $GITHUB_OUTPUT
 
             - name: Coverage report
-              if: always()
-              uses: actions/upload-artifact@master
+              if: always() && hashFiles('coverage.out') != ''
+              uses: actions/upload-artifact@v4
               with:
                   name: coverage-report
                   path: coverage.out
+                  if-no-files-found: ignore
+
+            - name: Post coverage comment
+              if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+              continue-on-error: true
+              uses: actions/github-script@v7
+              env:
+                  COVERAGE_TABLE: ${{ steps.coverage.outputs.md }}
+                  COVERAGE_TOTAL: ${{ steps.coverage.outputs.total }}
+              with:
+                  script: |
+                      const marker = '<!-- maigo-ci-report -->';
+                      const coverage = process.env.COVERAGE_TABLE;
+                      const total = process.env.COVERAGE_TOTAL;
+                      const body = `${marker}\n### Coverage (${total})\n${coverage}`;
+                      const { data: comments } = await github.rest.issues.listComments({
+                          issue_number: context.issue.number,
+                          owner: context.repo.owner,
+                          repo: context.repo.repo,
+                      });
+                      const existing = comments.find(c => c.body.includes(marker));
+                      if (existing) {
+                          await github.rest.issues.updateComment({
+                              comment_id: existing.id,
+                              owner: context.repo.owner,
+                              repo: context.repo.repo,
+                              body,
+                          });
+                      } else {
+                          await github.rest.issues.createComment({
+                              issue_number: context.issue.number,
+                              owner: context.repo.owner,
+                              repo: context.repo.repo,
+                              body,
+                          });
+                      }
+
+    benchmark:
+        needs: test
+        permissions:
+            contents: write
+            pull-requests: write
+            issues: write
+        runs-on: ubuntu-latest
+        strategy:
+            matrix:
+                go-version: [stable]
+
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+              with:
+                  fetch-depth: 0
+
+            - name: Setup go
+              uses: actions/setup-go@v5
+              with:
+                  go-version: ${{ matrix.go-version }}
+                  cache-dependency-path: go.sum
+
+            - name: Install deps
+              run: go mod download
+
+            - name: Run benchmark comparison
+              id: benchmark
+              if: github.event_name == 'pull_request'
+              run: |
+                  go install golang.org/x/perf/cmd/benchstat@latest
+                  git fetch origin ${{ github.base_ref }}
+                  git checkout origin/${{ github.base_ref }}
+                  go test -run=^$ -bench=. -benchmem ./... > benchmark-base.txt
+                  git checkout $GITHUB_SHA
+                  go test -run=^$ -bench=. -benchmem ./... > benchmark-pr.txt
+                  result=$($HOME/go/bin/benchstat benchmark-base.txt benchmark-pr.txt)
+                  echo "$result" | tee benchmark.txt
+                  echo "result<<EOF" >> $GITHUB_OUTPUT
+                  echo "$result" >> $GITHUB_OUTPUT
+                  echo "EOF" >> $GITHUB_OUTPUT
+
+            - name: Format benchmark markdown
+              id: bench-md
+              if: github.event_name == 'pull_request' && steps.benchmark.outputs.result != ''
+              run: |
+                  node <<'NODE' > bench.md
+                  const bench = process.env.BENCH;
+                  const sections = bench.split(/\n\s*\n/);
+                  const tables = [];
+                  for (const sec of sections) {
+                      if (!sec.includes('benchmark-base.txt')) continue;
+                      const lines = sec.split(/\n/).filter(l => l.trim());
+                      const start = lines.findIndex(l => l.includes('benchmark-base.txt'));
+                      if (start === -1 || start + 1 >= lines.length) continue;
+                      const h1 = lines[start].split('│').slice(1, -1).map(s => s.trim());
+                      const h2 = lines[start + 1].split('│').slice(1, -1).map(s => s.trim());
+                      const headers = ['Benchmark'];
+                      for (let i = 0; i < Math.min(h1.length, h2.length); i++) {
+                          headers.push(`${h1[i]} ${h2[i].replace(/\s+vs base$/, '')}`.trim());
+                      }
+                      headers.push('vs base');
+                      const rows = [];
+                      for (let i = start + 2; i < lines.length; i++) {
+                          const line = lines[i];
+                          if (line.startsWith('¹') || line.startsWith('²')) continue;
+                          const parts = line.trim().split(/\s{2,}/).map(s => s.trim());
+                          if (parts.length >= headers.length - 1) {
+                              const row = [parts[0]];
+                              for (let j = 1; j < headers.length - 1; j++) {
+                                  row.push(parts[j] || '');
+                              }
+                              row.push(parts.slice(headers.length - 1).join(' '));
+                              rows.push(row);
+                          }
+                      }
+                      if (rows.length) {
+                          let md = `| ${headers.join(' | ')} |\n| ${headers.map(() => '---').join(' | ')} |\n`;
+                          md += rows.map(r => `| ${r.join(' | ')} |`).join('\n');
+                          tables.push(md);
+                      }
+                  }
+                  process.stdout.write(tables.join('\n\n'));
+                  NODE
+                  echo "md<<EOF" >> $GITHUB_OUTPUT
+                  cat bench.md >> $GITHUB_OUTPUT
+                  echo "EOF" >> $GITHUB_OUTPUT
+              env:
+                  BENCH: ${{ steps.benchmark.outputs.result }}
 
             - name: Run benchmarks
+              if: github.event_name != 'pull_request'
               run: |
-                  go test -bench=. -benchmem ./... > benchmark.txt
+                  go test -run=^$ -bench=. -benchmem ./... > benchmark.txt
 
             - name: Benchmark report
-              uses: actions/upload-artifact@master
+              if: hashFiles('benchmark.txt') != ''
+              uses: actions/upload-artifact@v4
               with:
                   name: benchmark-report
                   path: benchmark.txt
+                  if-no-files-found: ignore
+
+            - name: Generate Markdown report
+              if: github.event_name == 'pull_request'
+              run: |
+                  echo "### Coverage" > report.md
+                  echo "${{ needs.test.outputs.coverage_table }}" >> report.md
+                  if [ -f bench.md ]; then
+                      echo "" >> report.md
+                      echo "### Benchmark" >> report.md
+                      cat bench.md >> report.md
+                  fi
+
+            - name: Upload Markdown report
+              if: github.event_name == 'pull_request' && hashFiles('report.md') != ''
+              uses: actions/upload-artifact@v4
+              with:
+                  name: markdown-report
+                  path: report.md
+                  if-no-files-found: ignore
+
+            - name: Post PR summary
+              if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+              continue-on-error: true
+              uses: actions/github-script@v7
+              env:
+                  COVERAGE_TABLE: ${{ needs.test.outputs.coverage_table }}
+                  COVERAGE_TOTAL: ${{ needs.test.outputs.coverage }}
+              with:
+                  script: |
+                      const fs = require('fs');
+                      const marker = '<!-- maigo-ci-report -->';
+                      let bench = '';
+                      try {
+                          bench = fs.readFileSync('bench.md', 'utf8').trim();
+                      } catch {}
+                      const coverage = process.env.COVERAGE_TABLE;
+                      const total = process.env.COVERAGE_TOTAL;
+                      const body = `${marker}\n### Coverage (${total})\n${coverage}\n\n### Benchmark\n${bench}`;
+                      const { data: comments } = await github.rest.issues.listComments({
+                          issue_number: context.issue.number,
+                          owner: context.repo.owner,
+                          repo: context.repo.repo,
+                      });
+                      const existing = comments.find(c => c.body.includes(marker));
+                      if (existing) {
+                          await github.rest.issues.updateComment({
+                              comment_id: existing.id,
+                              owner: context.repo.owner,
+                              repo: context.repo.repo,
+                              body,
+                          });
+                      } else {
+                          await github.rest.issues.createComment({
+                              issue_number: context.issue.number,
+                              owner: context.repo.owner,
+                              repo: context.repo.repo,
+                              body,
+                          });
+                      }
+
+            - name: Workflow summary
+              if: github.event_name == 'pull_request'
+              run: |
+                  echo "### Coverage" >> $GITHUB_STEP_SUMMARY
+                  echo "${{ needs.test.outputs.coverage_table }}" >> $GITHUB_STEP_SUMMARY
+                  if [ -f bench.md ]; then
+                      echo "" >> $GITHUB_STEP_SUMMARY
+                      echo "### Benchmark" >> $GITHUB_STEP_SUMMARY
+                      cat bench.md >> $GITHUB_STEP_SUMMARY
+                  fi
