@@ -3,6 +3,7 @@ package maigo
 import (
 	"bytes"
 	"encoding/json"
+	"encoding/xml"
 	"fmt"
 	"io"
 
@@ -61,9 +62,28 @@ func (r *ResponseBody) AsString() (string, error) {
 }
 
 // AsXML implements contracts.ResponseFluentBody.
+//
+// Deprecated: Use [AsXML] generic function instead.
 func (r *ResponseBody) AsXML(v any) error {
+	raw, err := AsXML[[]byte](r)
+	if err != nil {
+		return err
+	}
+
+	return xml.Unmarshal(raw, v)
+}
+
+// AsXML decodes the body as XML into a new instance of T.
+func AsXML[T any](r *ResponseBody) (T, error) {
 	defer r.Close()
-	return r.body.ReadAsXML(v)
+
+	var v T
+	if err := r.body.ReadAsXML(&v); err != nil {
+		var zero T
+		return zero, fmt.Errorf("failed reading as XML: %w", err)
+	}
+
+	return v, nil
 }
 
 // Close implements contracts.ResponseFluentBody.
