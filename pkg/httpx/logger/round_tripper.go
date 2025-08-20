@@ -10,9 +10,9 @@ import (
 	"github.com/jeanmolossi/MaiGo/pkg/httpx"
 )
 
-// maxLogBodySize limits how many bytes from request and response bodies are logged.
+// defaultMaxLogBodySize limits how many bytes from request and response bodies are logged.
 // Excess data is truncated to avoid overwhelming the logs.
-const maxLogBodySize = 65536 // 64KiB
+const defaultMaxLogBodySize = 65536 // 64KiB
 
 // LoggerHooks configures the behaviour of the logging round tripper.
 type LoggerHooks struct {
@@ -42,6 +42,10 @@ type LoggerHooks struct {
 	LogEnd bool
 	// SupressErrors avoids logging internal errors while processing hooks.
 	SupressErrors bool
+
+	// MaxLogBodySize limits how many bytes from request and response bodies are logged.
+	// Excess data is truncated to avoid overwhelming the logs.
+	MaxLogBodySize int
 }
 
 // reqTx resolves the request body transformer for the given context.
@@ -82,6 +86,10 @@ func LoggerRoundTripper(h LoggerHooks) httpx.ChainedRoundTripper {
 		h.EndMessage = endMsg
 	}
 
+	if h.MaxLogBodySize <= 0 {
+		h.MaxLogBodySize = defaultMaxLogBodySize
+	}
+
 	return func(next http.RoundTripper) http.RoundTripper {
 		return httpx.RoundTripperFn(func(r *http.Request) (*http.Response, error) {
 			req := httpx.CloneRequest(r)
@@ -95,7 +103,7 @@ func LoggerRoundTripper(h LoggerHooks) httpx.ChainedRoundTripper {
 			var rawReqBody []byte
 
 			if req.Body != nil {
-				raw, restored, err := httpx.ReadAndRestoreBody(req.Body, maxLogBodySize)
+				raw, restored, err := httpx.ReadAndRestoreBody(req.Body, h.MaxLogBodySize)
 				if err == nil {
 					req.Body = restored
 					rawReqBody = h.reqTx(ctx)(raw)
@@ -122,7 +130,7 @@ func LoggerRoundTripper(h LoggerHooks) httpx.ChainedRoundTripper {
 			var rawResBody []byte
 
 			if err == nil && resp != nil && resp.Body != nil {
-				raw, restored, rerr := httpx.ReadAndRestoreBody(resp.Body, maxLogBodySize)
+				raw, restored, rerr := httpx.ReadAndRestoreBody(resp.Body, h.MaxLogBodySize)
 				if rerr == nil {
 					resp.Body = restored
 					rawResBody = h.resTx(ctx)(raw)
