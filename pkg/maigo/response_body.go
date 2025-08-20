@@ -61,21 +61,14 @@ func (r *ResponseBody) AsString() (string, error) {
 	return r.body.ReadAsString()
 }
 
-// AsXML implements contracts.ResponseFluentBody.
-//
-// Deprecated: Use [AsXML] generic function instead.
-func (r *ResponseBody) AsXML(v any) error {
-	raw, err := AsXML[[]byte](r)
-	if err != nil {
-		return err
-	}
-
-	return xml.Unmarshal(raw, v)
+// AsXML decodes the body as XML into a new instance of T.
+func (r *ResponseBody) AsXML[T any]() (T, error) {
+       return AsXML[T](r)
 }
 
 // AsXML decodes the body as XML into a new instance of T.
 func AsXML[T any](r *ResponseBody) (T, error) {
-	defer r.Close()
+       defer r.Close()
 
 	var v T
 	if err := r.body.ReadAsXML(&v); err != nil {
