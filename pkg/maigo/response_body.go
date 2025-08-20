@@ -2,6 +2,7 @@ package maigo
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"io"
 
@@ -28,10 +29,29 @@ func (r *ResponseBody) AsBytes() ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-// AsJSON implements contracts.ResponseFluentBody.
+// AsJSON decodes the body as JSON into the provided value.
+//
+// Deprecated: Use [AsJSON] generic function instead.
 func (r *ResponseBody) AsJSON(v any) error {
+	raw, err := AsJSON[json.RawMessage](r)
+	if err != nil {
+		return err
+	}
+
+	return json.Unmarshal(raw, v)
+}
+
+// AsJSON decodes the body as JSON into a new instance of T.
+func AsJSON[T any](r *ResponseBody) (T, error) {
 	defer r.Close()
-	return r.body.ReadAsJSON(v)
+
+	var v T
+	if err := r.body.ReadAsJSON(&v); err != nil {
+		var zero T
+		return zero, fmt.Errorf("failed reading as JSON: %w", err)
+	}
+
+	return v, nil
 }
 
 // AsString implements contracts.ResponseFluentBody.
