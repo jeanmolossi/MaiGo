@@ -194,6 +194,7 @@ func secureFloat64() float64 {
 	secureRandMu.Lock()
 	v := secureRand.Float64()
 	secureRandMu.Unlock()
+
 	return v
 }
 
