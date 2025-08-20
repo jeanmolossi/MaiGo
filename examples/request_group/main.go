@@ -21,7 +21,7 @@ func main() {
 
 	start := time.Now()
 
-	group, err := async.All(
+	group, err := async.All(0,
 		client.GET("/users"),
 		client.GET("/resources"),
 	)

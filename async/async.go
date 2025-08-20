@@ -87,16 +87,17 @@ func (g *Group) Results() []result {
 //
 // Example:
 //
-//	group, err := async.All(
-//	    client.GET("/users/1"),
-//	    client.GET("/users/2"),
-//	    client.GET("/users/3"),
-//	)
-//	if err != nil {
-//	    // handle err
-//	}
+//	     // limit concurrent requests to 2
+//	     group, err := async.All(2,
+//	         client.GET("/users/1"),
+//	         client.GET("/users/2"),
+//	         client.GET("/users/3"),
+//	     )
+//		if err != nil {
+//		    // handle err
+//		}
 //
-//	group.Size() // 3 event requests still in transit.
+//		group.Size() // 3 event requests still in transit.
 func (g *Group) Size() int {
 	return len(g.results)
 }
@@ -123,9 +124,10 @@ func (g *Group) Result(i int) (contracts.Response, error) {
 	return result.response, result.err
 }
 
-// All dispatch the requests in a request own's goroutine.
-// If you pass 10 request, it opens 10 goroutines each one with a request.
-func All(builders ...contracts.RequestBuilder) (*Group, error) {
+// All dispatches requests in their own goroutines.
+// If limit <= 0, all requests run concurrently; otherwise at most limit
+// requests are executed simultaneously.
+func All(limit int, builders ...contracts.RequestBuilder) (*Group, error) {
 	if len(builders) == 0 {
 		return nil, ErrNoRequests
 	}
@@ -136,13 +138,25 @@ func All(builders ...contracts.RequestBuilder) (*Group, error) {
 	}
 	g.wg.Add(len(builders))
 
+	var sem chan struct{}
+	if limit > 0 {
+		sem = make(chan struct{}, limit)
+	}
+
 	for i, builder := range builders {
 		if builder == nil {
 			return nil, ErrNilRequestBuilder
 		}
 
+		if sem != nil {
+			sem <- struct{}{}
+		}
+
 		go func(i int, b contracts.RequestBuilder) {
 			defer g.wg.Done()
+			if sem != nil {
+				defer func() { <-sem }()
+			}
 
 			resp, err := b.Send()
 
