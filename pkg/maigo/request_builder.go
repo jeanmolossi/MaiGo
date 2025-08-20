@@ -2,14 +2,16 @@ package maigo
 
 import (
 	"context"
-	"crypto/rand"
+	crand "crypto/rand"
 	"encoding/binary"
 	"errors"
 	"fmt"
 	"math"
+	mrand "math/rand"
 	"net/http"
 	"net/url"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/jeanmolossi/MaiGo/pkg/maigo/contracts"
@@ -17,6 +19,11 @@ import (
 )
 
 var _ contracts.RequestBuilder = (*RequestBuilder)(nil)
+
+var (
+	secureRand   = newSecureRand()
+	secureRandMu sync.Mutex
+)
 
 type RequestBuilder struct {
 	request *Request
@@ -172,20 +179,23 @@ func (r *RequestBuilder) Send() (contracts.Response, error) {
 	return r.execute(req)
 }
 
-func secureFloat64() float64 {
-	var bits [8]byte
-	// read randomic 8 bytes from secure source
-	_, err := rand.Read(bits[:])
-	if err != nil {
+func newSecureRand() *mrand.Rand {
+	var b [8]byte
+	if _, err := crand.Read(b[:]); err != nil {
 		panic(err)
 	}
 
-	// parse bytes to 64 bits int
-	n := binary.LittleEndian.Uint64(bits[:])
+	seed := int64(binary.LittleEndian.Uint64(b[:]))
 
-	// normalize to interval [0, 1]
-	//nolint:mnd // 64 shift
-	return float64(n) / (1 << 64)
+	return mrand.New(mrand.NewSource(seed))
+}
+
+func secureFloat64() float64 {
+	secureRandMu.Lock()
+	v := secureRand.Float64()
+	secureRandMu.Unlock()
+
+	return v
 }
 
 func sleepCtx(ctx context.Context, d time.Duration) error {
