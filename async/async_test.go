@@ -61,3 +61,17 @@ func TestAllConcurrencyLimit(t *testing.T) {
 		})
 	}
 }
+
+func TestGroupResultIndexOutOfRange(t *testing.T) {
+	g := &Group{results: make([]result, 1)}
+
+	_, err := g.Result(1)
+	if err == nil {
+		t.Fatalf("expected error, got nil")
+	}
+
+	expected := fmt.Sprintf("index %d out of range [0-%d]", 1, 0)
+	if err.Error() != expected {
+		t.Fatalf("expected error %q got %q", expected, err.Error())
+	}
+}
