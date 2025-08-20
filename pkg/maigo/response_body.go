@@ -3,7 +3,6 @@ package maigo
 import (
 	"bytes"
 	"encoding/json"
-	"encoding/xml"
 	"fmt"
 	"io"
 
@@ -62,13 +61,8 @@ func (r *ResponseBody) AsString() (string, error) {
 }
 
 // AsXML decodes the body as XML into a new instance of T.
-func (r *ResponseBody) AsXML[T any]() (T, error) {
-       return AsXML[T](r)
-}
-
-// AsXML decodes the body as XML into a new instance of T.
 func AsXML[T any](r *ResponseBody) (T, error) {
-       defer r.Close()
+	defer r.Close()
 
 	var v T
 	if err := r.body.ReadAsXML(&v); err != nil {

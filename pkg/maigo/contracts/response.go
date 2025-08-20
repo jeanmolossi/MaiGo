@@ -38,8 +38,8 @@ type ResponseFluentBody interface {
 	AsBytes() ([]byte, error)
 	// AsString reads the body as a string.
 	AsString() (string, error)
-        // AsJSON decodes the body as JSON into v.
-        AsJSON(v any) error
+	// AsJSON decodes the body as JSON into v.
+	AsJSON(v any) error
 }
 
 // ResponseFluentCookie provides access to cookies returned by the server.
