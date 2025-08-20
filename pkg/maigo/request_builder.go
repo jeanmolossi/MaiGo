@@ -1,6 +1,7 @@
 package maigo
 
 import (
+	"context"
 	"crypto/rand"
 	"encoding/binary"
 	"errors"
@@ -121,7 +122,9 @@ func (r *RequestBuilder) executeWithRetry(request *http.Request) (contracts.Resp
 
 		// delay before another try
 		delay := r.calculateRetryDelay(attempt)
-		time.Sleep(delay)
+		if err := sleepCtx(request.Context(), delay); err != nil {
+			return nil, err
+		}
 	}
 
 	return nil, fmt.Errorf(
@@ -183,4 +186,20 @@ func secureFloat64() float64 {
 	// normalize to interval [0, 1]
 	//nolint:mnd // 64 shift
 	return float64(n) / (1 << 64)
+}
+
+func sleepCtx(ctx context.Context, d time.Duration) error {
+	if d <= 0 {
+		return nil
+	}
+
+	t := time.NewTimer(d)
+	defer t.Stop()
+
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	case <-t.C:
+		return nil
+	}
 }
