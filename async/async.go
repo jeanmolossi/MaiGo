@@ -154,6 +154,7 @@ func All(limit int, builders ...contracts.RequestBuilder) (*Group, error) {
 
 		go func(i int, b contracts.RequestBuilder) {
 			defer g.wg.Done()
+
 			if sem != nil {
 				defer func() { <-sem }()
 			}
