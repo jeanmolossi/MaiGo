@@ -45,12 +45,16 @@ func TestAllConcurrencyLimit(t *testing.T) {
 	for _, tt := range cases {
 		t.Run(fmt.Sprintf("limit=%d", tt.limit), func(t *testing.T) {
 			start := time.Now()
+
 			group, err := All(tt.limit, makeBuilders()...)
 			if err != nil {
 				t.Fatalf("All returned error: %v", err)
 			}
+
 			group.Wait()
+
 			elapsed := time.Since(start)
+
 			if elapsed < tt.expected || elapsed > tt.expected+100*time.Millisecond {
 				t.Fatalf("limit=%d expected around %v got %v", tt.limit, tt.expected, elapsed)
 			}
