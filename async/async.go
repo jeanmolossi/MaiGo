@@ -112,7 +112,7 @@ func (g *Group) Wait() {
 func (g *Group) Result(i int) (contracts.Response, error) {
 	length := len(g.results)
 	if i > length-1 {
-		return nil, fmt.Errorf("index %d out ot range [0-%d]", i, length-1)
+		return nil, fmt.Errorf("index %d out of range [0-%d]", i, length-1)
 	}
 
 	if i < 0 {
