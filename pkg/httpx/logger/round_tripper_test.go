@@ -186,9 +186,10 @@ func TestLoggerRoundTripper_TruncatesRequestBodyAndLogsSize(t *testing.T) {
 
 	// Transformers who NOT delete body, else you log empty.
 	hooks := logger.LoggerHooks{
-		LogStart:      true,
-		LogEnd:        true,
-		SupressErrors: true,
+		LogStart:       true,
+		LogEnd:         true,
+		SupressErrors:  true,
+		MaxLogBodySize: maxLogBodySize,
 		ReqBodyTransformerFn: func(ctx context.Context) func([]byte) []byte {
 			return func(b []byte) []byte { read = len(b); return b }
 		},
