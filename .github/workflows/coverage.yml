@@ -1,0 +1,30 @@
+name: Coverage
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  coverage:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-go@v5
+        with:
+          go-version: stable
+      - run: |
+          chmod +x scripts/coverage_report.sh
+          ./scripts/coverage_report.sh > coverage_report.md
+      - uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: coverage.out
+      - uses: peter-evans/create-or-update-comment@v4
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          body-path: coverage_report.md

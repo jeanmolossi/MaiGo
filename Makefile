@@ -1,4 +1,4 @@
-.PHONY: all test bench clean
+.PHONY: all test bench clean coverage-diff
 
 all: test bench
 
@@ -12,3 +12,6 @@ bench:
 clean:
 	@rm -f .coverage.out coverage.html
 	@rm -f benchmark.*
+
+coverage-diff:
+	./scripts/coverage_report.sh > coverage_report.md
