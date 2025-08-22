@@ -4,65 +4,68 @@ set -euo pipefail
 MODULE=$(go list -m)
 MIN_COVERAGE=${MIN_COVERAGE:-0}
 
-go test -coverprofile=coverage.out ./...
-go tool cover -func=coverage.out > current.func
+cov_branch() {
+  local profile=$1
+  go test -coverprofile="$profile" ./... >&2
+  go tool cover -func="$profile" | awk -v module="$MODULE" '
+    $1 == "total:" {
+      gsub("%", "", $NF)
+      total = $NF
+      next
+    }
+    index($1, module) == 1 {
+      split($1, path, ":")
+      rel = substr(path[1], length(module)+2)
+      pkg = rel
+      sub(/\/[^\/]+$/, "", pkg)
+      if (pkg == "") pkg = "."
+      cov = $NF
+      gsub("%", "", cov)
+      sum[pkg] += cov
+      count[pkg]++
+    }
+    END {
+      for (p in sum) printf "%s\t%.1f\n", p, sum[p]/count[p]
+      printf "__total__\t%s\n", total
+    }' > "$profile.func"
+}
 
-# Fetch main and run tests in a temporary worktree
+cov_branch coverage.out
+
 if git remote get-url origin >/dev/null 2>&1; then
-    git fetch origin main >/dev/null
-    TMPDIR=$(mktemp -d)
-    trap 'rm -rf "$TMPDIR" current.func main.func' EXIT
-
-    git worktree add --detach "$TMPDIR/main" origin/main >/dev/null
-    pushd "$TMPDIR/main" >/dev/null
-    go test -coverprofile=coverage.out ./...
-    go tool cover -func=coverage.out > "$OLDPWD/main.func"
-    popd >/dev/null
-    git worktree remove --force "$TMPDIR/main" >/dev/null
+  git fetch origin main >/dev/null
+  TMP=$(mktemp -d)
+  trap 'rm -rf "$TMP" main.out.func coverage.out.func' EXIT
+  git worktree add --detach "$TMP/main" origin/main >/dev/null
+  pushd "$TMP/main" >/dev/null
+  cov_branch main.out
+  popd >/dev/null
+  mv "$TMP/main/main.out.func" main.out.func
+  git worktree remove --force "$TMP/main" >/dev/null
 else
-    echo "origin remote not found" >&2
-    exit 1
+  echo "origin remote not found" >&2
+  exit 1
 fi
 
-python3 - "$MODULE" "$MIN_COVERAGE" <<'PY'
-import os, sys, json
-module = sys.argv[1]
-min_cov = float(sys.argv[2])
-
-def parse(path):
-    pkg_cov = {}
-    total = 0.0
-    with open(path) as f:
-        for line in f:
-            line = line.rstrip()
-            if line.startswith('total:'):
-                total = float(line.split()[-1].strip('%'))
-                continue
-            parts = line.split('\t')
-            if len(parts) < 3:
-                continue
-            file_part, _, cov_part = parts[0], parts[1], parts[2]
-            if not file_part.startswith(module + '/'):
-                continue
-            rel = file_part[len(module)+1:]
-            rel = rel.split(':')[0]
-            pkg = os.path.dirname(rel)
-            cov = float(cov_part.strip('%'))
-            pkg_cov.setdefault(pkg, []).append(cov)
-    for pkg in pkg_cov:
-        covs = pkg_cov[pkg]
-        pkg_cov[pkg] = sum(covs)/len(covs)
-    return pkg_cov, total
-
-curr_pkg, curr_total = parse('current.func')
-main_pkg, main_total = parse('main.func')
-all_pkgs = sorted(set(curr_pkg) | set(main_pkg))
-print('| Package | main (%) | PR (%) | \u0394 (%) | Min (%) |')
-print('| --- | --- | --- | --- | --- |')
-for pkg in all_pkgs:
-    mc = main_pkg.get(pkg, 0.0)
-    cc = curr_pkg.get(pkg, 0.0)
+awk -F'\t' -v min="$MIN_COVERAGE" '
+NR==FNR { main[$1]=$2; next }
+{ curr[$1]=$2 }
+END {
+  total_main = main["__total__"] + 0
+  total_curr = curr["__total__"] + 0
+  delete main["__total__"]; delete curr["__total__"]
+  print "| Package | main (%) | PR (%) | Δ (%) | Min (%) |"
+  print "| --- | --- | --- | --- | --- |"
+  for (p in main) pkgs[p]=1
+  for (p in curr) pkgs[p]=1
+  n=asorti(pkgs, sorted)
+  for (i=1; i<=n; i++) {
+    p = sorted[i]
+    mc = (p in main)?main[p]:0
+    cc = (p in curr)?curr[p]:0
     diff = cc - mc
-    print(f'| {pkg} | {mc:.1f} | {cc:.1f} | {diff:+.1f} | {min_cov:.1f} |')
-print(f'| **Total** | {main_total:.1f} | {curr_total:.1f} | {curr_total - main_total:+.1f} | {min_cov:.1f} |')
-PY
+    printf "| %s | %.1f | %.1f | %+0.1f | %.1f |\n", p, mc, cc, diff, min
+  }
+  diff_total = total_curr - total_main
+  printf "| **Total** | %.1f | %.1f | %+0.1f | %.1f |\n", total_main, total_curr, diff_total, min
+}' main.out.func coverage.out.func
