@@ -1,4 +1,4 @@
-.PHONY: all test bench clean coverage-diff
+.PHONY: all test bench clean coverage-diff benchmark-diff
 
 all: test bench
 
@@ -10,8 +10,11 @@ bench:
 	go test -run=^$$ -count=1 -bench=. -benchmem ./... > benchmark.txt
 
 clean:
-	@rm -f .coverage.out coverage.html coverage.out coverage_report.md
-	@rm -f benchmark.*
+        @rm -f .coverage.out coverage.html coverage.out coverage_report.md
+        @rm -f benchmark.*
 
 coverage-diff:
-	bash -eo pipefail scripts/coverage_report.sh | tee coverage_report.md
+        bash -eo pipefail scripts/coverage_report.sh | tee coverage_report.md
+
+benchmark-diff:
+        bash -eo pipefail scripts/benchmark_compare.sh | tee benchmark_report.md
