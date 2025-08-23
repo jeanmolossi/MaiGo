@@ -3,9 +3,10 @@ set -euo pipefail
 
 PR_OUT=${PR_OUT:-bench_pr.txt}
 MAIN_OUT=${MAIN_OUT:-bench_main.txt}
+COUNT=${COUNT:-10}
 
 echo "Running benchmarks for current branch..." >&2
-go test -run=^$ -bench=. -benchmem -count=10 ./... | tee "$PR_OUT" >/dev/null
+go test -run=^$ -bench=. -benchmem -count="$COUNT" ./... | tee "$PR_OUT" >/dev/null
 
 TMP=""
 cleanup() {
@@ -21,7 +22,7 @@ if git remote get-url origin >/dev/null 2>&1; then
   TMP=$(mktemp -d)
   git worktree add --detach "$TMP/main" origin/main >/dev/null
   pushd "$TMP/main" >/dev/null
-  go test -run=^$ -bench=. -benchmem -count=10 ./... > "$OLDPWD/$MAIN_OUT"
+  go test -run=^$ -bench=. -benchmem -count="$COUNT" ./... > "$OLDPWD/$MAIN_OUT"
   popd >/dev/null
 else
   cp "$PR_OUT" "$MAIN_OUT"
@@ -50,11 +51,14 @@ for row in reader:
     if row[0] == '' and len(row) > 1 and row[1] in ('sec/op', 'B/op', 'allocs/op'):
         current = row[1]
         continue
-    if row[0] == '' or row[0] == 'geomean':
+    if row[0] == '' or row[0] == 'geomean' or len(row) < 6:
         continue
     bench = row[0]
-    base = float(row[1])
-    pr = float(row[3])
+    try:
+        base = float(row[1])
+        pr = float(row[3])
+    except ValueError:
+        continue
     delta = row[5]
     d = data[bench]
     if current == 'sec/op':
