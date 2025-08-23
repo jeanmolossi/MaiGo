@@ -31,4 +31,7 @@ if ! command -v benchstat >/dev/null 2>&1; then
 fi
 
 echo "## Benchmark Results"
-benchstat -format markdown "$MAIN_OUT" "$PR_OUT"
+echo
+echo '```'
+benchstat -format text "$MAIN_OUT" "$PR_OUT"
+echo '```'

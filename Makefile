@@ -1,4 +1,4 @@
-.PHONY: all test bench clean coverage-diff benchmark-diff lint
+.PHONY: all test bench clean coverage-diff benchmark-diff lint install-go-lint
 
 all: test bench
 
@@ -19,5 +19,17 @@ coverage-diff:
 benchmark-diff:
 	bash -eo pipefail scripts/benchmark_compare.sh | tee benchmark_report.md
 
-lint:
+lint: install-go-lint
 	golangci-lint run
+
+install-go-lint:
+	@if ! command -v golangci-lint >/dev/null; then \
+		read -p "Go's linter is not installed on your machine. Do you want to install it? [Y/n] " choice; \
+		if [ "$$choice" != "n" ] && [ "$$choice" != "N" ]; then \
+			curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/HEAD/install.sh | sh -s -- -b $$(go env GOPATH)/bin v2.3.0; \
+			if ! command -v golangci-lint >/dev/null; then \
+				echo "Go linter installation failed. Exiting..."; \
+				exit 1; \
+			fi; \
+		fi; \
+	fi
