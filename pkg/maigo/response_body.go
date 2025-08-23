@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/jeanmolossi/MaiGo/pkg/maigo/contracts"
+	"github.com/jeanmolossi/maigo/pkg/maigo/contracts"
 )
 
 var _ contracts.ResponseFluentBody = (*ResponseBody)(nil)

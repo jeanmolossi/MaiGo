@@ -3,7 +3,7 @@ package maigo
 import (
 	"net/http"
 
-	"github.com/jeanmolossi/MaiGo/pkg/maigo/contracts"
+	"github.com/jeanmolossi/maigo/pkg/maigo/contracts"
 )
 
 var _ contracts.Response = (*Response)(nil)

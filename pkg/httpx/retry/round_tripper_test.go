@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/jeanmolossi/MaiGo/pkg/httpx"
+	"github.com/jeanmolossi/maigo/pkg/httpx"
 	"github.com/stretchr/testify/require"
 )
 

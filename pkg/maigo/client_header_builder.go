@@ -1,9 +1,9 @@
 package maigo
 
 import (
-	"github.com/jeanmolossi/MaiGo/pkg/maigo/contracts"
-	"github.com/jeanmolossi/MaiGo/pkg/maigo/header"
-	"github.com/jeanmolossi/MaiGo/pkg/maigo/mime"
+	"github.com/jeanmolossi/maigo/pkg/maigo/contracts"
+	"github.com/jeanmolossi/maigo/pkg/maigo/header"
+	"github.com/jeanmolossi/maigo/pkg/maigo/mime"
 )
 
 var _ contracts.BuilderHeader[contracts.ClientBuilder] = (*ClientHeaderBuilder)(nil)

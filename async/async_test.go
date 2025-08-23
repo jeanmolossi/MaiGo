@@ -7,8 +7,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/jeanmolossi/MaiGo/pkg/maigo"
-	"github.com/jeanmolossi/MaiGo/pkg/maigo/contracts"
+	"github.com/jeanmolossi/maigo/pkg/maigo"
+	"github.com/jeanmolossi/maigo/pkg/maigo/contracts"
 )
 
 func makeDelayedServer(delay time.Duration) *httptest.Server {

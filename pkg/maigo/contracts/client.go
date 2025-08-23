@@ -7,8 +7,8 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/jeanmolossi/MaiGo/pkg/maigo/header"
-	"github.com/jeanmolossi/MaiGo/pkg/maigo/mime"
+	"github.com/jeanmolossi/maigo/pkg/maigo/header"
+	"github.com/jeanmolossi/maigo/pkg/maigo/mime"
 )
 
 // Client combines configuration and the ability to create HTTP requests for

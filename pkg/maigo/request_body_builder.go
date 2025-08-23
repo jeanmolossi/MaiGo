@@ -4,7 +4,7 @@ import (
 	"errors"
 	"io"
 
-	"github.com/jeanmolossi/MaiGo/pkg/maigo/contracts"
+	"github.com/jeanmolossi/maigo/pkg/maigo/contracts"
 )
 
 var _ contracts.BuilderRequestBody[contracts.RequestBuilder] = (*RequestBodyBuilder)(nil)

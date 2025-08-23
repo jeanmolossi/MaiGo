@@ -7,8 +7,8 @@ import (
 	"log"
 	"os"
 
-	"github.com/jeanmolossi/MaiGo/examples/testserver"
-	"github.com/jeanmolossi/MaiGo/pkg/maigo"
+	"github.com/jeanmolossi/maigo/examples/testserver"
+	"github.com/jeanmolossi/maigo/pkg/maigo"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/baggage"

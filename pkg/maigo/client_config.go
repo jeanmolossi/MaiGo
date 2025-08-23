@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"net/url"
 
-	"github.com/jeanmolossi/MaiGo/pkg/maigo/contracts"
-	"github.com/jeanmolossi/MaiGo/pkg/maigo/method"
+	"github.com/jeanmolossi/maigo/pkg/maigo/contracts"
+	"github.com/jeanmolossi/maigo/pkg/maigo/method"
 )
 
 var (

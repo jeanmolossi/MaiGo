@@ -3,7 +3,7 @@ package contracts
 import (
 	"net/http"
 
-	"github.com/jeanmolossi/MaiGo/pkg/maigo/header"
+	"github.com/jeanmolossi/maigo/pkg/maigo/header"
 )
 
 // Header is the interface that wraps the basic methods for managing HTTP headers.

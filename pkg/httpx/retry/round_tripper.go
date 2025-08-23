@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/jeanmolossi/MaiGo/pkg/httpx"
+	"github.com/jeanmolossi/maigo/pkg/httpx"
 )
 
 const (

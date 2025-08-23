@@ -9,8 +9,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/jeanmolossi/MaiGo/pkg/httpx"
-	"github.com/jeanmolossi/MaiGo/pkg/httpx/logger"
+	"github.com/jeanmolossi/maigo/pkg/httpx"
+	"github.com/jeanmolossi/maigo/pkg/httpx/logger"
 	"github.com/stretchr/testify/require"
 )
 
