@@ -16,8 +16,8 @@
 coverage.*
 benchmark.*
 
-# Allow coverage workflow
-!.github/workflows/coverage.yml
+# Allow GitHub workflows
+!.github/workflows/
 # Dependency directories (remove the comment below to include it)
 # vendor/
 

@@ -10,6 +10,9 @@ permissions:
 jobs:
   coverage:
     runs-on: ubuntu-latest
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}
+      cancel-in-progress: true
     steps:
       - uses: actions/checkout@v4
         with:
@@ -20,11 +23,20 @@ jobs:
       - run: |
           chmod +x scripts/coverage_report.sh
           ./scripts/coverage_report.sh > coverage_report.md
-      - uses: actions/upload-artifact@v4
-        with:
-          name: coverage
-          path: coverage.out
-      - uses: peter-evans/create-or-update-comment@v4
+      - uses: peter-evans/find-comment@v3
+        id: fc
         with:
           issue-number: ${{ github.event.pull_request.number }}
+          body-includes: Coverage Report
+      - uses: peter-evans/create-or-update-comment@v4
+        with:
+          comment-id: ${{ steps.fc.outputs.comment-id }}
+          issue-number: ${{ github.event.pull_request.number }}
           body-path: coverage_report.md
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage
+          path: |
+            coverage.out
+            coverage_report.md

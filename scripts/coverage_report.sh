@@ -1,12 +1,16 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-MODULE=$(go list -m)
+MODULE=$(go list -m 2>/dev/null || true)
+if [[ -z "$MODULE" ]]; then
+  echo "Failed to determine module via 'go list -m'; ensure you are in a module or workspace" >&2
+  exit 1
+fi
 MIN_COVERAGE=${MIN_COVERAGE:-0}
 
 cov_branch() {
   local profile=$1
-  go test -coverprofile="$profile" ./... >&2
+  go test -count=1 -covermode=atomic -coverprofile="$profile" ./... >&2
   go tool cover -func="$profile" | awk -v module="$MODULE" '
     $1 == "total:" {
       gsub("%", "", $NF)
@@ -32,21 +36,32 @@ cov_branch() {
 
 cov_branch coverage.out
 
-if git remote get-url origin >/dev/null 2>&1; then
-  git fetch origin main >/dev/null
+TMP=""
+trap 'rm -rf "${TMP:-}" main.out.func coverage.out.func' EXIT
+
+BASE_BRANCH="${BASE_REF:-${GITHUB_BASE_REF:-}}"
+if [[ -z "$BASE_BRANCH" ]]; then
+  upstream=$(git rev-parse --abbrev-ref --symbolic-full-name @{u} 2>/dev/null || true)
+  [[ -n "$upstream" ]] && BASE_BRANCH=${upstream#*/}
+fi
+if [[ -z "$BASE_BRANCH" ]]; then
+  BASE_BRANCH=$(git symbolic-ref --short HEAD 2>/dev/null || true)
+fi
+
+if git remote get-url origin >/dev/null 2>&1 && [[ -n "$BASE_BRANCH" ]]; then
+  git fetch origin "$BASE_BRANCH" >/dev/null
   TMP=$(mktemp -d)
-  trap 'rm -rf "$TMP" main.out.func coverage.out.func' EXIT
-  git worktree add --detach "$TMP/main" origin/main >/dev/null
+  git worktree add --detach "$TMP/main" "origin/$BASE_BRANCH" >/dev/null
   pushd "$TMP/main" >/dev/null
   cov_branch main.out
   popd >/dev/null
   mv "$TMP/main/main.out.func" main.out.func
   git worktree remove --force "$TMP/main" >/dev/null
 else
-  echo "origin remote not found" >&2
-  exit 1
+  cp coverage.out.func main.out.func
 fi
 
+echo "## Coverage Report"
 awk -F'\t' -v min="$MIN_COVERAGE" '
 NR==FNR { main[$1]=$2; next }
 { curr[$1]=$2 }

@@ -14,4 +14,4 @@ clean:
 	@rm -f benchmark.*
 
 coverage-diff:
-	./scripts/coverage_report.sh > coverage_report.md
+	bash -eo pipefail scripts/coverage_report.sh | tee coverage_report.md
