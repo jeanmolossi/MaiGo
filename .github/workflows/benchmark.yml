@@ -1,4 +1,4 @@
-name: Coverage
+name: Benchmark
 
 on:
   pull_request:
@@ -8,13 +8,11 @@ permissions:
   pull-requests: write
 
 jobs:
-  coverage:
+  benchmark:
     runs-on: ubuntu-latest
     concurrency:
       group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
       cancel-in-progress: true
-    env:
-      MIN_COVERAGE: ${{ vars.MIN_COVERAGE || 0 }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -23,23 +21,24 @@ jobs:
         with:
           go-version: stable
       - run: |
-          chmod +x scripts/coverage_report.sh
-          bash -eo pipefail scripts/coverage_report.sh | tee coverage_report.md
+          chmod +x scripts/benchmark_compare.sh
+          bash -eo pipefail scripts/benchmark_compare.sh | tee benchmark_report.md
       - uses: peter-evans/find-comment@v3
         id: fc
         with:
           issue-number: ${{ github.event.pull_request.number }}
-          body-includes: '<!-- coverage-workflow -->'
+          body-includes: '<!-- bench-workflow -->'
       - uses: peter-evans/create-or-update-comment@v4
         with:
           comment-id: ${{ steps.fc.outputs.comment-id }}
           issue-number: ${{ github.event.pull_request.number }}
           edit-mode: replace
-          body-path: coverage_report.md
+          body-path: benchmark_report.md
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: coverage
+          name: benchmark
           path: |
-            coverage.out
-            coverage_report.md
+            bench_pr.txt
+            bench_main.txt
+            benchmark_report.md
