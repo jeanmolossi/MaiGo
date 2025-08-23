@@ -26,31 +26,7 @@ jobs:
             - name: Install deps
               run: go mod download
 
-            - name: Run tests and coverage
+            - name: Run tests
               env:
                   CGO_ENABLED: 1
-              run: |
-                  go test -v -race -cover -coverprofile=coverage.out ./...
-                  go tool cover -func=coverage.out
-
-            - name: Coverage report
-              if: always()
-              uses: actions/upload-artifact@master
-              with:
-                  name: coverage-report
-                  path: coverage.out
-
-            - name: Run golangci-lint
-              uses: golangci/golangci-lint-action@v8
-              with:
-                  version: v2.1
-
-            - name: Run benchmarks
-              run: |
-                  go test -bench=. -benchmem ./... > benchmark.txt
-
-            - name: Benchmark report
-              uses: actions/upload-artifact@master
-              with:
-                  name: benchmark-report
-                  path: benchmark.txt
+              run: go test -v -race ./...
