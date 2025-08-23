@@ -1,4 +1,4 @@
-module github.com/jeanmolossi/MaiGo
+module github.com/jeanmolossi/maigo
 
 go 1.24.4
 

@@ -7,8 +7,8 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/jeanmolossi/MaiGo/pkg/httpx"
-	"github.com/jeanmolossi/MaiGo/pkg/httpx/logger"
+	"github.com/jeanmolossi/maigo/pkg/httpx"
+	"github.com/jeanmolossi/maigo/pkg/httpx/logger"
 )
 
 // ExampleLoggerRoundTripper demonstrates how to chain the logging round tripper

@@ -9,7 +9,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/jeanmolossi/MaiGo/pkg/maigo/contracts"
+	"github.com/jeanmolossi/maigo/pkg/maigo/contracts"
 )
 
 var (

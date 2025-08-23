@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/jeanmolossi/MaiGo/pkg/httpx"
+	"github.com/jeanmolossi/maigo/pkg/httpx"
 )
 
 // defaultMaxLogBodySize limits how many bytes from request and response bodies are logged.

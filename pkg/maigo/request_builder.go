@@ -14,8 +14,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/jeanmolossi/MaiGo/pkg/maigo/contracts"
-	"github.com/jeanmolossi/MaiGo/pkg/maigo/header"
+	"github.com/jeanmolossi/maigo/pkg/maigo/contracts"
+	"github.com/jeanmolossi/maigo/pkg/maigo/header"
 )
 
 var _ contracts.RequestBuilder = (*RequestBuilder)(nil)

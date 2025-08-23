@@ -4,9 +4,9 @@ import (
 	"log/slog"
 	"net/http"
 
-	"github.com/jeanmolossi/MaiGo/examples/testserver"
-	"github.com/jeanmolossi/MaiGo/pkg/maigo"
-	"github.com/jeanmolossi/MaiGo/pkg/maigo/mime"
+	"github.com/jeanmolossi/maigo/examples/testserver"
+	"github.com/jeanmolossi/maigo/pkg/maigo"
+	"github.com/jeanmolossi/maigo/pkg/maigo/mime"
 )
 
 func main() {

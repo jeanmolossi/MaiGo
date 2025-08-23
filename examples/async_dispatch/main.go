@@ -4,10 +4,10 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/jeanmolossi/MaiGo/async"
-	"github.com/jeanmolossi/MaiGo/examples/testserver"
-	"github.com/jeanmolossi/MaiGo/pkg/maigo"
-	"github.com/jeanmolossi/MaiGo/pkg/maigo/header"
+	"github.com/jeanmolossi/maigo/async"
+	"github.com/jeanmolossi/maigo/examples/testserver"
+	"github.com/jeanmolossi/maigo/pkg/maigo"
+	"github.com/jeanmolossi/maigo/pkg/maigo/header"
 )
 
 func main() {

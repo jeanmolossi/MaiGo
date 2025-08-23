@@ -3,7 +3,7 @@ package maigo
 import (
 	"context"
 
-	"github.com/jeanmolossi/MaiGo/pkg/maigo/contracts"
+	"github.com/jeanmolossi/maigo/pkg/maigo/contracts"
 )
 
 var _ contracts.BuilderRequestContext[contracts.RequestBuilder] = (*RequestContextBuilder)(nil)

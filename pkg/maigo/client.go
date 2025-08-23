@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/jeanmolossi/MaiGo/pkg/maigo/contracts"
+	"github.com/jeanmolossi/maigo/pkg/maigo/contracts"
 )
 
 // interface implementation type check.

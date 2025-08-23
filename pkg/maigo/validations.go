@@ -1,6 +1,6 @@
 package maigo
 
-import "github.com/jeanmolossi/MaiGo/pkg/maigo/contracts"
+import "github.com/jeanmolossi/maigo/pkg/maigo/contracts"
 
 var _ contracts.Validations = (*Validations)(nil)
 

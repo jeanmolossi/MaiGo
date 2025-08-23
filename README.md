@@ -1,5 +1,5 @@
-[![Go Reference](https://pkg.go.dev/badge/github.com/jeanmolossi/MaiGo.svg)](https://pkg.go.dev/github.com/jeanmolossi/MaiGo)
-[![CI](https://github.com/jeanmolossi/MaiGo/actions/workflows/ci.yml/badge.svg)](https://github.com/jeanmolossi/MaiGo/actions/workflows/ci.yml)
+[![Go Reference](https://pkg.go.dev/badge/github.com/jeanmolossi/maigo.svg)](https://pkg.go.dev/github.com/jeanmolossi/maigo)
+[![CI](https://github.com/jeanmolossi/maigo/actions/workflows/ci.yml/badge.svg)](https://github.com/jeanmolossi/maigo/actions/workflows/ci.yml)
 
 # MaiGo
 
