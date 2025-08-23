@@ -32,6 +32,10 @@ if err := resp.Body().AsJSON(&users); err != nil {
 
 Outros exemplos estão disponíveis na pasta `examples`, incluindo chamadas com cabeçalhos customizados, balanceamento de carga e *tracing* com OpenTelemetry. E não se surpreenda se surgir uma nova referência à Mai no meio dos logs.
 
+## Releases
+As releases são geradas automaticamente ao mesclar alterações no branch `main`.
+O workflow [`release.yml`](.github/workflows/release.yml) usa [GoReleaser](https://goreleaser.com/) para criar tags, gerar changelog e publicar pacotes utilizando o `GITHUB_TOKEN` com permissões de `contents: write` e `packages: write`.
+
 ## Contributing
 Contribuições são muito bem-vindas! Para colaborar:
 1. Fork este repositório.
