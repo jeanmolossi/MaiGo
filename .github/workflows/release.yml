@@ -10,7 +10,7 @@ permissions:
 
 jobs:
     goreleaser:
-        if: startsWith(github.event.head_commit.message, 'Merge pull request')
+        if: startsWith(github.event.head_commit.message, 'Merge pull request') || contains(github.event.head_commit.message, '(#')
         runs-on: ubuntu-latest
         steps:
             - name: Checkout
