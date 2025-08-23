@@ -30,11 +30,13 @@ func TestBalancedBaseURL_RoundRobin(t *testing.T) {
 	}
 
 	urls := make([]*url.URL, len(raw))
+
 	for i, r := range raw {
 		u, err := url.Parse(r)
 		if err != nil {
 			t.Fatalf("parse url %d: %v", i, err)
 		}
+
 		urls[i] = u
 	}
 
