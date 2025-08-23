@@ -3,6 +3,7 @@ name: Release
 on:
     push:
         branches: ["main"]
+    workflow_dispatch:
 
 permissions:
     contents: write
@@ -10,7 +11,7 @@ permissions:
 
 jobs:
     goreleaser:
-        if: startsWith(github.event.head_commit.message, 'Merge pull request') || contains(github.event.head_commit.message, '(#')
+        if: github.event_name == 'workflow_dispatch' || startsWith(github.event.head_commit.message, 'Merge pull request') || contains(github.event.head_commit.message, '(#')
         runs-on: ubuntu-latest
         steps:
             - name: Checkout
@@ -29,8 +30,17 @@ jobs:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
             - name: Run GoReleaser
+              if: github.event_name != 'workflow_dispatch'
               uses: goreleaser/goreleaser-action@v5
               with:
                   args: release --clean --release-notes=CHANGELOG.md
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+            - name: Run GoReleaser (snapshot)
+              if: github.event_name == 'workflow_dispatch'
+              uses: goreleaser/goreleaser-action@v5
+              with:
+                  args: release --clean --release-notes=CHANGELOG.md --skip-publish --snapshot
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
