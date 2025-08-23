@@ -24,7 +24,7 @@ fi
 # install benchstat for comparison
 if ! command -v benchstat >/dev/null 2>&1; then
   echo "Installing benchstat..." >&2
-  if ! go install golang.org/x/perf/cmd/benchstat@latest; then
+  if ! GOSUMDB=off go install golang.org/x/perf/cmd/benchstat@latest; then
     echo "Failed to install benchstat" >&2
     exit 1
   fi

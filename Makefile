@@ -20,7 +20,7 @@ benchmark-diff:
 	bash -eo pipefail scripts/benchmark_compare.sh | tee benchmark_report.md
 
 lint: install-go-lint
-	golangci-lint run
+	golangci-lint run ./...
 
 install-go-lint:
 	@if ! command -v golangci-lint >/dev/null; then \
