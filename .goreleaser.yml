@@ -46,6 +46,8 @@ changelog:
       - "^test:"
 
 release:
+  extra_files:
+    - glob: RELEASE_NOTES.md
   footer: >-
 
     ---

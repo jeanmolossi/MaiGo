@@ -27,7 +27,7 @@ jobs:
               if: github.event_name != 'workflow_dispatch'
               uses: goreleaser/goreleaser-action@v6
               with:
-                  args: release --clean --release-notes=RELEASE_NOTES.md
+                  args: release --clean --config .goreleaser.yml --release-notes=RELEASE_NOTES.md
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -35,6 +35,6 @@ jobs:
               if: github.event_name == 'workflow_dispatch'
               uses: goreleaser/goreleaser-action@v6
               with:
-                  args: release --clean --release-notes=RELEASE_NOTES.md --skip-publish --snapshot
+                  args: release --clean --config .goreleaser.yml --release-notes=RELEASE_NOTES.md --skip-publish --snapshot
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
