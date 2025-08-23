@@ -22,18 +22,11 @@ jobs:
               with:
                   go-version-file: go.mod
 
-            - name: Generate changelog
-              uses: goreleaser/goreleaser-action@v5
-              with:
-                  args: changelog --output=CHANGELOG.md
-              env:
-                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
             - name: Run GoReleaser
               if: github.event_name != 'workflow_dispatch'
               uses: goreleaser/goreleaser-action@v5
               with:
-                  args: release --clean --release-notes=CHANGELOG.md
+                  args: release --clean --release-notes=RELEASE_NOTES.md
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -41,6 +34,6 @@ jobs:
               if: github.event_name == 'workflow_dispatch'
               uses: goreleaser/goreleaser-action@v5
               with:
-                  args: release --clean --release-notes=CHANGELOG.md --skip-publish --snapshot
+                  args: release --clean --release-notes=RELEASE_NOTES.md --skip-publish --snapshot
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
