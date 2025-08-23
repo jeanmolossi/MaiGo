@@ -27,8 +27,10 @@ jobs:
               run: go mod download
 
             - name: Run tests and coverage
+              env:
+                  CGO_ENABLED: 1
               run: |
-                  go test -v -cover -coverprofile=coverage.out ./...
+                  go test -v -race -cover -coverprofile=coverage.out ./...
                   go tool cover -func=coverage.out
 
             - name: Coverage report
@@ -37,6 +39,11 @@ jobs:
               with:
                   name: coverage-report
                   path: coverage.out
+
+            - name: Run golangci-lint
+              uses: golangci/golangci-lint-action@v8
+              with:
+                  version: v2.1
 
             - name: Run benchmarks
               run: |
