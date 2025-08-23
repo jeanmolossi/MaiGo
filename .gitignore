@@ -16,6 +16,8 @@
 coverage.*
 benchmark.*
 
+# Allow GitHub workflows
+!.github/workflows/
 # Dependency directories (remove the comment below to include it)
 # vendor/
 
