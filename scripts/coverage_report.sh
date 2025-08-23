@@ -61,6 +61,7 @@ else
   cp coverage.out.func main.out.func
 fi
 
+echo "<!-- coverage-workflow -->"
 echo "## Coverage Report"
 awk -F'\t' -v min="$MIN_COVERAGE" '
 NR==FNR { main[$1]=$2; next }

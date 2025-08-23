@@ -36,6 +36,7 @@ if ! command -v benchstat >/dev/null 2>&1; then
   fi
 fi
 
+echo "<!-- bench-workflow -->"
 echo "## Benchmark Results"
 echo
 diff_csv=$(benchstat -format csv "$MAIN_OUT" "$PR_OUT" 2>/dev/null)
