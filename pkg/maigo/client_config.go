@@ -119,6 +119,7 @@ func newBalancedClientConfigBase(baseURLs []string) *ClientConfigBase {
 	var validations []error
 
 	parsedURLs := make([]*url.URL, 0, len(baseURLs)) // pre-alloc cap like baseURLs
+
 	for index, baseURL := range baseURLs {
 		if baseURL == "" {
 			validations = append(validations, fmt.Errorf("base URL %d: %w", index, ErrEmptyBaseURL))
