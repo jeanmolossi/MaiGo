@@ -2,6 +2,7 @@ package maigo
 
 import (
 	"net/url"
+	"sync"
 	"testing"
 )
 
@@ -15,7 +16,7 @@ func TestDefaultBaseURL_BaseURL(t *testing.T) {
 
 	d := newDefaultBaseURL(u)
 
-	if got := d.BaseURL(); got != u {
+	if got := d.BaseURL(); got.String() != u.String() {
 		t.Errorf("BaseURL() = %v, want %v", got, u)
 	}
 }
@@ -48,4 +49,69 @@ func TestBalancedBaseURL_RoundRobin(t *testing.T) {
 			t.Errorf("call %d: BaseURL() = %v, want %v", i, got, want)
 		}
 	}
+}
+
+func TestBalancedBaseURL_SingleURL(t *testing.T) {
+	t.Parallel()
+
+	u, err := url.Parse("https://only.com")
+	if err != nil {
+		t.Fatalf("parse url: %v", err)
+	}
+
+	b := newBalancedBaseURL([]*url.URL{u})
+
+	for i := 0; i < 10; i++ {
+		if got := b.BaseURL(); got != u {
+			t.Fatalf("sequential call %d: got %v, want %v", i, got, u)
+		}
+	}
+
+	const workers = 50
+
+	var wg sync.WaitGroup
+
+	wg.Add(workers)
+
+	for i := 0; i < workers; i++ {
+		go func() {
+			defer wg.Done()
+
+			if got := b.BaseURL(); got != u {
+				t.Errorf("concurrent call: got %v, want %v", got, u)
+			}
+		}()
+	}
+
+	wg.Wait()
+}
+
+func TestBalancedBaseURL_EmptyURLs(t *testing.T) {
+	t.Parallel()
+
+	b := newBalancedBaseURL(nil)
+
+	for i := 0; i < 10; i++ {
+		if got := b.BaseURL(); got != nil {
+			t.Fatalf("sequential call %d: got %v, want nil", i, got)
+		}
+	}
+
+	const workers = 50
+
+	var wg sync.WaitGroup
+
+	wg.Add(workers)
+
+	for i := 0; i < workers; i++ {
+		go func() {
+			defer wg.Done()
+
+			if got := b.BaseURL(); got != nil {
+				t.Errorf("concurrent call: got %v, want nil", got)
+			}
+		}()
+	}
+
+	wg.Wait()
 }
