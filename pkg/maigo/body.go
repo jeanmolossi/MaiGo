@@ -40,18 +40,18 @@ func (u *UnbufferedBody) Close() (err error) {
 
 // Read implements contracts.Body.
 func (u *UnbufferedBody) Read(p []byte) (n int, err error) {
-	u.mutex.RLock()
+	u.mutex.Lock()
 	n, err = u.reader.Read(p)
-	u.mutex.RUnlock()
+	u.mutex.Unlock()
 
 	return
 }
 
 // ReadAsJSON implements contracts.Body.
 func (u *UnbufferedBody) ReadAsJSON(obj any) (err error) {
-	u.mutex.RLock()
+	u.mutex.Lock()
 	err = json.NewDecoder(u.reader).Decode(obj)
-	u.mutex.RUnlock()
+	u.mutex.Unlock()
 
 	return
 }
@@ -75,9 +75,9 @@ func (u *UnbufferedBody) WriteAsJSON(obj any) (err error) {
 
 // ReadAsXML implements contracts.Body.
 func (u *UnbufferedBody) ReadAsXML(obj any) (err error) {
-	u.mutex.RLock()
+	u.mutex.Lock()
 	err = xml.NewDecoder(u.reader).Decode(obj)
-	u.mutex.RUnlock()
+	u.mutex.Unlock()
 
 	return
 }
@@ -101,8 +101,8 @@ func (u *UnbufferedBody) WriteAsXML(obj any) (err error) {
 
 // ReadAsString implements contracts.Body.
 func (u *UnbufferedBody) ReadAsString() (string, error) {
-	u.mutex.RLock()
-	defer u.mutex.RUnlock()
+	u.mutex.Lock()
+	defer u.mutex.Unlock()
 
 	stringBytes, err := io.ReadAll(u.reader)
 	if err != nil {
