@@ -11,27 +11,27 @@ MIN_COVERAGE=${MIN_COVERAGE:-0}
 cov_branch() {
   local profile=$1
   go test -count=1 -covermode=atomic -coverprofile="$profile" ./... >&2
-  go tool cover -func="$profile" | awk -v module="$MODULE" '
-    $1 == "total:" {
-      gsub("%", "", $NF)
-      total = $NF
-      next
-    }
-    index($1, module) == 1 {
+  awk -v module="$MODULE" '
+    NR==1 { next }
+    {
       split($1, path, ":")
-      rel = substr(path[1], length(module)+2)
+      file = path[1]
+      rel = substr(file, length(module)+2)
       pkg = rel
       sub(/\/[^\/]+$/, "", pkg)
       if (pkg == "") pkg = "."
-      cov = $NF
-      gsub("%", "", cov)
-      sum[pkg] += cov
-      count[pkg]++
+      stmts = $2 + 0
+      cnt = $3 + 0
+      totalStmts[pkg] += stmts
+      if (cnt > 0) covered[pkg] += stmts
+      totalAll += stmts
+      if (cnt > 0) coveredAll += stmts
     }
     END {
-      for (p in sum) printf "%s\t%.1f\n", p, sum[p]/count[p]
-      printf "__total__\t%s\n", total
-    }' > "$profile.func"
+      for (p in totalStmts) if (totalStmts[p] > 0) printf "%s\t%.1f\n", p, 100*covered[p]/totalStmts[p]
+      if (totalAll > 0) printf "__total__\t%.1f\n", 100*coveredAll/totalAll
+      else printf "__total__\t0\n"
+    }' "$profile" > "$profile.func"
 }
 
 cov_branch coverage.out
@@ -41,7 +41,7 @@ trap 'rm -rf "${TMP:-}" main.out.func coverage.out.func' EXIT
 
 BASE_BRANCH="${BASE_REF:-${GITHUB_BASE_REF:-}}"
 if [[ -z "$BASE_BRANCH" ]]; then
-  upstream=$(git rev-parse --abbrev-ref --symbolic-full-name @{u} 2>/dev/null || true)
+  upstream=$(git rev-parse --abbrev-ref --symbolic-full-name "@{u}" 2>/dev/null || true)
   [[ -n "$upstream" ]] && BASE_BRANCH=${upstream#*/}
 fi
 if [[ -z "$BASE_BRANCH" ]]; then
@@ -84,3 +84,9 @@ END {
   diff_total = total_curr - total_main
   printf "| **Total** | %.1f | %.1f | %+0.1f | %.1f |\n", total_main, total_curr, diff_total, min
 }' main.out.func coverage.out.func
+
+total_curr=$(awk -F'\t' '$1=="__total__"{print $2}' coverage.out.func)
+if ! awk -v c="$total_curr" -v m="$MIN_COVERAGE" 'BEGIN{exit(c>=m?0:1)}'; then
+  echo "Total coverage ${total_curr}% is below minimum ${MIN_COVERAGE}%" >&2
+  exit 1
+fi

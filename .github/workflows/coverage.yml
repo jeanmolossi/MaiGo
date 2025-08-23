@@ -11,8 +11,10 @@ jobs:
   coverage:
     runs-on: ubuntu-latest
     concurrency:
-      group: ${{ github.workflow }}-${{ github.ref }}
+      group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
       cancel-in-progress: true
+    env:
+      MIN_COVERAGE: ${{ vars.MIN_COVERAGE || 0 }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -22,7 +24,7 @@ jobs:
           go-version: stable
       - run: |
           chmod +x scripts/coverage_report.sh
-          ./scripts/coverage_report.sh > coverage_report.md
+          bash -eo pipefail scripts/coverage_report.sh | tee coverage_report.md
       - uses: peter-evans/find-comment@v3
         id: fc
         with:
