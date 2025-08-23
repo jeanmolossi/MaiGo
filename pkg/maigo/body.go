@@ -185,6 +185,7 @@ func (b *BufferedBody) ReadAsJSON(obj any) (err error) {
 // WriteAsJSON implements contracts.Body.
 func (b *BufferedBody) WriteAsJSON(obj any) (err error) {
 	b.mutex.Lock()
+	b.buffer.Reset()
 	err = json.NewEncoder(b.buffer).Encode(obj)
 	b.mutex.Unlock()
 
@@ -203,6 +204,7 @@ func (b *BufferedBody) ReadAsString() (str string, err error) {
 // WriteAsString implements contracts.Body.
 func (b *BufferedBody) WriteAsString(body string) (err error) {
 	b.mutex.Lock()
+	b.buffer.Reset()
 	_, err = b.buffer.WriteString(body)
 	b.mutex.Unlock()
 
@@ -221,6 +223,7 @@ func (b *BufferedBody) ReadAsXML(obj any) (err error) {
 // WriteAsXML implements contracts.Body.
 func (b *BufferedBody) WriteAsXML(obj any) (err error) {
 	b.mutex.Lock()
+	b.buffer.Reset()
 	err = xml.NewEncoder(b.buffer).Encode(obj)
 	b.mutex.Unlock()
 
