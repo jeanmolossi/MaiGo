@@ -11,6 +11,19 @@ var (
 	benchCookies []*http.Cookie
 )
 
+func Test_newCookiesWithCapacity_Negative(t *testing.T) {
+	t.Parallel()
+
+	c := newCookiesWithCapacity(-1)
+	if c == nil {
+		t.Fatalf("newCookiesWithCapacity(-1) returned nil")
+	}
+
+	if c.Count() != 0 {
+		t.Fatalf("Count() = %d, want %d", c.Count(), 0)
+	}
+}
+
 func TestCookies_AddAndCount(t *testing.T) {
 	t.Parallel()
 
@@ -45,6 +58,10 @@ func TestCookies_AddAndCount(t *testing.T) {
 
 	if c.Count() != 2 {
 		t.Fatalf("after trimmed Add Count() = %d, want %d", c.Count(), 2)
+	}
+
+	if c.Len() != c.Count() {
+		t.Fatalf("Len() = %d, Count() = %d", c.Len(), c.Count())
 	}
 }
 
@@ -98,6 +115,30 @@ func TestCookies_UnwrapEmpty(t *testing.T) {
 
 	if got := c.Unwrap(); got != nil {
 		t.Fatalf("Unwrap() = %v, want nil", got)
+	}
+}
+
+func TestCookies_NilReceiver(t *testing.T) {
+	t.Parallel()
+
+	var c *Cookies
+
+	c.Add(&http.Cookie{Name: "k", Value: "v"})
+
+	if c.Count() != 0 {
+		t.Fatalf("Count() on nil receiver = %d, want %d", c.Count(), 0)
+	}
+
+	if c.Len() != 0 {
+		t.Fatalf("Len() on nil receiver = %d, want %d", c.Len(), 0)
+	}
+
+	if c.Get(0) != nil {
+		t.Fatalf("Get on nil receiver returned non-nil")
+	}
+
+	if c.Unwrap() != nil {
+		t.Fatalf("Unwrap on nil receiver returned non-nil slice")
 	}
 }
 

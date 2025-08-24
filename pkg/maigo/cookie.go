@@ -10,7 +10,7 @@ import (
 var _ contracts.Cookies = (*Cookies)(nil)
 
 // Cookies stores an in-memory collection of HTTP cookies. The zero value is
-// ready to use; the type is not safe for concurrent use—callers must
+// ready to use; the type is not safe for concurrent use; callers must
 // synchronize access when sharing the same instance across goroutines. An
 // internal helper pre-allocates space for a small number of cookies.
 type Cookies struct {
@@ -21,14 +21,14 @@ const defaultCookieCap = 5 // typical requests send fewer than five cookies
 
 // Add appends cookie to the collection.
 //
-// Nil cookies or cookies whose Name is empty after trimming whitespace with
-// strings.TrimSpace are ignored. The Name is checked with TrimSpace but not
-// mutated, so callers must supply a non-blank Name after trimming and remain
-// responsible for duplicate management or any additional validation. Add
-// stores the caller's pointer; mutating the cookie after adding will affect
-// the stored value.
+// A nil receiver causes Add to do nothing. Nil cookies or cookies whose Name is
+// empty after trimming whitespace with strings.TrimSpace are ignored. The Name
+// is checked with TrimSpace but not mutated, so callers must supply a non-blank
+// Name after trimming and remain responsible for duplicate management or any
+// additional validation. Add stores the caller's pointer; mutating the cookie
+// after adding will affect the stored value.
 func (c *Cookies) Add(cookie *http.Cookie) {
-	if cookie == nil || strings.TrimSpace(cookie.Name) == "" {
+	if c == nil || cookie == nil || strings.TrimSpace(cookie.Name) == "" {
 		return
 	}
 
@@ -37,9 +37,23 @@ func (c *Cookies) Add(cookie *http.Cookie) {
 
 // Count returns the number of stored cookies.
 //
-// It reports the raw number of cookies and does not account for duplicates.
-// Callers concerned with uniqueness must handle it themselves.
+// It reports the raw number of cookies and does not account for duplicates. A
+// nil receiver reports zero.
 func (c *Cookies) Count() int {
+	if c == nil {
+		return 0
+	}
+
+	return len(c.cookies)
+}
+
+// Len mirrors Count and returns the number of stored cookies. It also reports
+// zero for a nil receiver.
+func (c *Cookies) Len() int {
+	if c == nil {
+		return 0
+	}
+
 	return len(c.cookies)
 }
 
@@ -47,10 +61,11 @@ func (c *Cookies) Count() int {
 //
 // The returned pointer aliases internal state; mutating it updates the
 // underlying cookie stored by Cookies. Callers needing an independent copy
-// should use Unwrap. It returns nil if index is out of bounds, so callers must
-// check for nil before dereferencing and ensure the index is intended.
+// should use Unwrap. It returns nil if the receiver is nil or index is out of
+// bounds, so callers must check for nil before dereferencing and ensure the
+// index is intended.
 func (c *Cookies) Get(index int) *http.Cookie {
-	if index < 0 || index >= len(c.cookies) {
+	if c == nil || index < 0 || index >= len(c.cookies) {
 		return nil
 	}
 
@@ -60,10 +75,10 @@ func (c *Cookies) Get(index int) *http.Cookie {
 // Unwrap returns a deep copy of the stored cookies.
 //
 // The returned slice and each *http.Cookie are new allocations, so modifying
-// them does not affect the internal state. It returns nil when no cookies are
-// stored.
+// them does not affect the internal state. It returns nil when the receiver is
+// nil or no cookies are stored.
 func (c *Cookies) Unwrap() []*http.Cookie {
-	if len(c.cookies) == 0 {
+	if c == nil || len(c.cookies) == 0 {
 		return nil
 	}
 
