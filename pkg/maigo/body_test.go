@@ -4,12 +4,24 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"strings"
 	"sync"
+	"sync/atomic"
 	"testing"
 )
 
 type sample struct {
 	Name string `json:"name" xml:"name"`
+}
+
+type trackedRC struct {
+	io.Reader
+	closed int32
+}
+
+func (t *trackedRC) Close() error {
+	atomic.StoreInt32(&t.closed, 1)
+	return nil
 }
 
 func TestBufferedBodyStringOperations(t *testing.T) {
@@ -283,6 +295,32 @@ func TestUnbufferedBodyStringOperations(t *testing.T) {
 	if gotAgain != want {
 		t.Errorf("ReadAsString() second read = %q, want %q", gotAgain, want)
 	}
+
+	t.Run("replaces reader closes previous", func(t *testing.T) {
+		t.Parallel()
+
+		prev := &trackedRC{Reader: strings.NewReader("old")}
+		body := newUnbufferedBody(prev)
+
+		if err := body.WriteAsString("new"); err != nil {
+			t.Fatalf("WriteAsString() error = %v", err)
+		}
+
+		if atomic.LoadInt32(&prev.closed) != 1 {
+			t.Error("WriteAsString() did not close previous reader")
+		}
+
+		prev = &trackedRC{Reader: strings.NewReader("old")}
+		body = newUnbufferedBody(prev)
+
+		if err := body.Set(strings.NewReader("new")); err != nil {
+			t.Fatalf("Set() error = %v", err)
+		}
+
+		if atomic.LoadInt32(&prev.closed) != 1 {
+			t.Error("Set() did not close previous reader")
+		}
+	})
 }
 
 func TestUnbufferedBodyJSONOperations(t *testing.T) {
@@ -328,6 +366,21 @@ func TestUnbufferedBodyJSONOperations(t *testing.T) {
 			t.Errorf("ReadAsJSON() after rewrite = %#v, want %#v", out, second)
 		}
 	})
+
+	t.Run("write closes previous reader", func(t *testing.T) {
+		t.Parallel()
+
+		prev := &trackedRC{Reader: strings.NewReader("old")}
+		body := newUnbufferedBody(prev)
+
+		if err := body.WriteAsJSON(sample{Name: "new"}); err != nil {
+			t.Fatalf("WriteAsJSON() error = %v", err)
+		}
+
+		if atomic.LoadInt32(&prev.closed) != 1 {
+			t.Error("WriteAsJSON() did not close previous reader")
+		}
+	})
 }
 
 func TestUnbufferedBodyXMLOperations(t *testing.T) {
@@ -371,6 +424,21 @@ func TestUnbufferedBodyXMLOperations(t *testing.T) {
 
 		if out != second {
 			t.Errorf("ReadAsXML() after rewrite = %#v, want %#v", out, second)
+		}
+	})
+
+	t.Run("write closes previous reader", func(t *testing.T) {
+		t.Parallel()
+
+		prev := &trackedRC{Reader: strings.NewReader("old")}
+		body := newUnbufferedBody(prev)
+
+		if err := body.WriteAsXML(sample{Name: "new"}); err != nil {
+			t.Fatalf("WriteAsXML() error = %v", err)
+		}
+
+		if atomic.LoadInt32(&prev.closed) != 1 {
+			t.Error("WriteAsXML() did not close previous reader")
 		}
 	})
 }

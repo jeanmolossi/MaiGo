@@ -47,23 +47,38 @@ func (u *UnbufferedBody) Read(p []byte) (n int, err error) {
 	return
 }
 
+func (u *UnbufferedBody) readAllAndSwapLocked() (data []byte, closePrev func(), err error) {
+	prev := u.reader
+
+	data, err = io.ReadAll(prev)
+
+	var once sync.Once
+
+	closePrev = func() { once.Do(func() { _ = prev.Close() }) }
+
+	if err != nil {
+		return nil, closePrev, err
+	}
+
+	u.reader = io.NopCloser(bytes.NewReader(data))
+
+	return data, closePrev, nil
+}
+
 // ReadAsJSON reads the full body, decodes it into obj and replaces the
 // underlying reader so the data can be consumed again. Decoding directly from
 // u.reader would advance it, making subsequent reads return no data.
 func (u *UnbufferedBody) ReadAsJSON(obj any) (err error) {
 	u.mutex.Lock()
-	defer u.mutex.Unlock()
+	data, closePrev, err := u.readAllAndSwapLocked()
+	u.mutex.Unlock()
 
-	prev := u.reader
-
-	data, err := io.ReadAll(prev)
 	if err != nil {
-		_ = prev.Close()
+		closePrev()
 		return fmt.Errorf("failed reading body as JSON: %w", err)
 	}
 
-	u.reader = io.NopCloser(bytes.NewReader(data))
-	_ = prev.Close()
+	defer closePrev()
 
 	if err = json.Unmarshal(data, obj); err != nil {
 		return fmt.Errorf("failed decoding body as JSON: %w", err)
@@ -76,15 +91,18 @@ func (u *UnbufferedBody) ReadAsJSON(obj any) (err error) {
 func (u *UnbufferedBody) WriteAsJSON(obj any) (err error) {
 	var buf bytes.Buffer
 
-	u.mutex.Lock()
-	defer u.mutex.Unlock()
-
-	err = json.NewEncoder(&buf).Encode(obj)
-	if err != nil {
+	if err = json.NewEncoder(&buf).Encode(obj); err != nil {
 		return
 	}
 
+	u.mutex.Lock()
+	prev := u.reader
 	u.reader = io.NopCloser(&buf)
+	u.mutex.Unlock()
+
+	if prev != nil {
+		_ = prev.Close()
+	}
 
 	return
 }
@@ -94,18 +112,15 @@ func (u *UnbufferedBody) WriteAsJSON(obj any) (err error) {
 // consume u.reader.
 func (u *UnbufferedBody) ReadAsXML(obj any) (err error) {
 	u.mutex.Lock()
-	defer u.mutex.Unlock()
+	data, closePrev, err := u.readAllAndSwapLocked()
+	u.mutex.Unlock()
 
-	prev := u.reader
-
-	data, err := io.ReadAll(prev)
 	if err != nil {
-		_ = prev.Close()
+		closePrev()
 		return fmt.Errorf("failed reading body as XML: %w", err)
 	}
 
-	u.reader = io.NopCloser(bytes.NewReader(data))
-	_ = prev.Close()
+	defer closePrev()
 
 	if err = xml.Unmarshal(data, obj); err != nil {
 		return fmt.Errorf("failed decoding body as XML: %w", err)
@@ -118,15 +133,18 @@ func (u *UnbufferedBody) ReadAsXML(obj any) (err error) {
 func (u *UnbufferedBody) WriteAsXML(obj any) (err error) {
 	var buf bytes.Buffer
 
-	u.mutex.Lock()
-	defer u.mutex.Unlock()
-
-	err = xml.NewEncoder(&buf).Encode(obj)
-	if err != nil {
+	if err = xml.NewEncoder(&buf).Encode(obj); err != nil {
 		return
 	}
 
+	u.mutex.Lock()
+	prev := u.reader
 	u.reader = io.NopCloser(&buf)
+	u.mutex.Unlock()
+
+	if prev != nil {
+		_ = prev.Close()
+	}
 
 	return
 }
@@ -134,23 +152,29 @@ func (u *UnbufferedBody) WriteAsXML(obj any) (err error) {
 // ReadAsString implements contracts.Body.
 func (u *UnbufferedBody) ReadAsString() (string, error) {
 	u.mutex.Lock()
-	defer u.mutex.Unlock()
+	data, closePrev, err := u.readAllAndSwapLocked()
+	u.mutex.Unlock()
 
-	stringBytes, err := io.ReadAll(u.reader)
 	if err != nil {
+		closePrev()
 		return "", fmt.Errorf("failed reading body as string: %w", err)
 	}
 
-	u.reader = io.NopCloser(bytes.NewReader(stringBytes))
+	defer closePrev()
 
-	return string(stringBytes), nil
+	return string(data), nil
 }
 
 // WriteAsString implements contracts.Body.
 func (u *UnbufferedBody) WriteAsString(body string) (err error) {
 	u.mutex.Lock()
+	prev := u.reader
 	u.reader = io.NopCloser(strings.NewReader(body))
 	u.mutex.Unlock()
+
+	if prev != nil {
+		_ = prev.Close()
+	}
 
 	return
 }
@@ -158,12 +182,17 @@ func (u *UnbufferedBody) WriteAsString(body string) (err error) {
 // Set implements contracts.Body.
 func (u *UnbufferedBody) Set(body io.Reader) error {
 	u.mutex.Lock()
-	defer u.mutex.Unlock()
+	prev := u.reader
 
 	if closer, ok := body.(io.ReadCloser); ok {
 		u.reader = closer
 	} else {
 		u.reader = io.NopCloser(body)
+	}
+	u.mutex.Unlock()
+
+	if prev != nil {
+		_ = prev.Close()
 	}
 
 	return nil
