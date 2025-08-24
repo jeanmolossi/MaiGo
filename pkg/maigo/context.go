@@ -27,13 +27,18 @@ func (c *Context) Set(ctx context.Context) {
 		return
 	}
 
+	if c.ctx == ctx {
+		return
+	}
+
 	c.ctx = ctx
 }
 
 // Unwrap returns the stored context or context.Background if the receiver or
 // its stored context is nil. Returning Background ensures callers always receive
-// a usable context; cancellation and deadlines are expected to be managed by
-// the caller.
+// a usable context and repeated calls in this nil case yield the same instance,
+// providing idempotency. Cancellation and deadlines are expected to be managed
+// by the caller.
 func (c *Context) Unwrap() context.Context {
 	if c == nil || c.ctx == nil {
 		return context.Background()
