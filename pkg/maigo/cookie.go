@@ -23,9 +23,11 @@ const defaultCookieCap = 5 // typical requests send fewer than five cookies
 // Add appends cookie to the collection.
 //
 // Nil cookies or cookies whose Name is empty after trimming whitespace with
-// strings.TrimSpace are ignored. The Name is trimmed, so callers must supply a
-// non-blank Name after trimming and remain responsible for duplicate
-// management or any additional validation.
+// strings.TrimSpace are ignored. The Name is checked with TrimSpace but not
+// mutated, so callers must supply a non-blank Name after trimming and remain
+// responsible for duplicate management or any additional validation. Add
+// stores the caller's pointer; mutating the cookie after adding will affect
+// the stored value.
 func (c *Cookies) Add(cookie *http.Cookie) {
 	if cookie == nil || strings.TrimSpace(cookie.Name) == "" {
 		return

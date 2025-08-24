@@ -5,6 +5,11 @@ import (
 	"testing"
 )
 
+var (
+	benchCookie  *http.Cookie
+	benchCookies []*http.Cookie
+)
+
 func TestCookies_AddAndCount(t *testing.T) {
 	t.Parallel()
 
@@ -129,7 +134,7 @@ func BenchmarkCookies_Get(b *testing.B) {
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		_ = c.Get(0)
+		benchCookie = c.Get(0)
 	}
 }
 
@@ -143,6 +148,6 @@ func BenchmarkCookies_Unwrap(b *testing.B) {
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		_ = c.Unwrap()
+		benchCookies = c.Unwrap()
 	}
 }
