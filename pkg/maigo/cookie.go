@@ -94,7 +94,10 @@ func (c *Cookies) Unwrap() []*http.Cookie {
 // cookies. The zero value of Cookies is also ready to use, so callers should
 // decide whether this pre-allocation is necessary.
 func newDefaultHTTPCookies() *Cookies {
-	return &Cookies{
-		cookies: make([]*http.Cookie, 0, defaultCookieCap), // pre-alloc
-	}
+	return newCookiesWithCapacity(defaultCookieCap)
+}
+
+// newCookiesWithCapacity returns a Cookies instance pre-allocated to capacity.
+func newCookiesWithCapacity(capacity int) *Cookies {
+	return &Cookies{cookies: make([]*http.Cookie, 0, capacity)}
 }

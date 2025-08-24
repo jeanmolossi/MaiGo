@@ -1,6 +1,7 @@
 package maigo
 
 import (
+	"fmt"
 	"net/http"
 	"testing"
 )
@@ -37,6 +38,13 @@ func TestCookies_AddAndCount(t *testing.T) {
 
 	if c.Count() != 1 {
 		t.Fatalf("after invalid Add Count() = %d, want %d", c.Count(), 1)
+	}
+
+	// adding a cookie with surrounding whitespace but non-empty after trimming should succeed
+	c.Add(&http.Cookie{Name: "  session  ", Value: "xyz"})
+
+	if c.Count() != 2 {
+		t.Fatalf("after trimmed Add Count() = %d, want %d", c.Count(), 2)
 	}
 }
 
@@ -140,9 +148,22 @@ func TestCookies_UnwrapDeepCopy(t *testing.T) {
 	unwrapped[0].Name = "changed"
 	unwrapped[0].Unparsed[0] = "x=y"
 
+	unwrapped = append(unwrapped, &http.Cookie{Name: "extra", Value: "v"})
+	if len(unwrapped) != 2 {
+		t.Fatalf("appended slice length = %d, want %d", len(unwrapped), 2)
+	}
+
 	got := c.Get(0)
 	if got.Name != "session" || got.Unparsed[0] != "a=b" {
 		t.Fatalf("original cookie mutated: %v", got)
+	}
+
+	if c.Count() != 1 {
+		t.Fatalf("original slice length changed: %d", c.Count())
+	}
+
+	if c.Get(1) != nil {
+		t.Fatalf("appending to unwrapped slice affected original: %v", c.Get(1))
 	}
 }
 
@@ -150,7 +171,7 @@ func BenchmarkCookies_Add(b *testing.B) {
 	cookie := &http.Cookie{Name: "k", Value: "v"}
 
 	b.Run("prealloc", func(b *testing.B) {
-		c := &Cookies{cookies: make([]*http.Cookie, 0, b.N)}
+		c := newCookiesWithCapacity(b.N)
 
 		b.ReportAllocs()
 		b.ResetTimer()
@@ -184,15 +205,21 @@ func BenchmarkCookies_Get(b *testing.B) {
 }
 
 func BenchmarkCookies_Unwrap(b *testing.B) {
-	c := newDefaultHTTPCookies()
-	for i := 0; i < 10; i++ {
-		c.Add(&http.Cookie{Name: "k", Value: "v"})
-	}
+	sizes := []int{0, 1, 8, 64, 512}
 
-	b.ReportAllocs()
-	b.ResetTimer()
+	for _, n := range sizes {
+		b.Run(fmt.Sprintf("n=%d", n), func(b *testing.B) {
+			c := newDefaultHTTPCookies()
+			for i := 0; i < n; i++ {
+				c.Add(&http.Cookie{Name: "k", Value: "v"})
+			}
 
-	for i := 0; i < b.N; i++ {
-		benchCookies = c.Unwrap()
+			b.ReportAllocs()
+			b.ResetTimer()
+
+			for i := 0; i < b.N; i++ {
+				benchCookies = c.Unwrap()
+			}
+		})
 	}
 }
