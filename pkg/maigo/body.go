@@ -54,7 +54,9 @@ func (u *UnbufferedBody) ReadAsJSON(obj any) (err error) {
 	u.mutex.Lock()
 	defer u.mutex.Unlock()
 
-	data, err := io.ReadAll(u.reader)
+	prev := u.reader
+
+	data, err := io.ReadAll(prev)
 	if err != nil {
 		return fmt.Errorf("failed reading body as JSON: %w", err)
 	}
@@ -64,6 +66,8 @@ func (u *UnbufferedBody) ReadAsJSON(obj any) (err error) {
 	}
 
 	u.reader = io.NopCloser(bytes.NewReader(data))
+
+	_ = prev.Close()
 
 	return nil
 }
@@ -92,7 +96,9 @@ func (u *UnbufferedBody) ReadAsXML(obj any) (err error) {
 	u.mutex.Lock()
 	defer u.mutex.Unlock()
 
-	data, err := io.ReadAll(u.reader)
+	prev := u.reader
+
+	data, err := io.ReadAll(prev)
 	if err != nil {
 		return fmt.Errorf("failed reading body as XML: %w", err)
 	}
@@ -102,6 +108,8 @@ func (u *UnbufferedBody) ReadAsXML(obj any) (err error) {
 	}
 
 	u.reader = io.NopCloser(bytes.NewReader(data))
+
+	_ = prev.Close()
 
 	return nil
 }
@@ -200,7 +208,7 @@ func (b *BufferedBody) Read(p []byte) (n int, err error) {
 // ReadAsJSON implements contracts.Body.
 func (b *BufferedBody) ReadAsJSON(obj any) (err error) {
 	b.mutex.RLock()
-	err = json.NewDecoder(b.buffer).Decode(obj)
+	err = json.Unmarshal(b.buffer.Bytes(), obj)
 	b.mutex.RUnlock()
 
 	return
@@ -238,7 +246,7 @@ func (b *BufferedBody) WriteAsString(body string) (err error) {
 // ReadAsXML implements contracts.Body.
 func (b *BufferedBody) ReadAsXML(obj any) (err error) {
 	b.mutex.RLock()
-	err = xml.NewDecoder(b.buffer).Decode(obj)
+	err = xml.Unmarshal(b.buffer.Bytes(), obj)
 	b.mutex.RUnlock()
 
 	return

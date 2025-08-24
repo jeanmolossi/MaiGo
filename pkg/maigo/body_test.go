@@ -71,11 +71,20 @@ func TestBufferedBodyJSONOperations(t *testing.T) {
 
 		var out sample
 		if err := body.ReadAsJSON(&out); err != nil {
-			t.Fatalf("ReadAsJSON() error = %v", err)
+			t.Fatalf("ReadAsJSON() first read error = %v", err)
 		}
 
 		if out != in {
-			t.Errorf("ReadAsJSON() = %#v, want %#v", out, in)
+			t.Errorf("ReadAsJSON() first read = %#v, want %#v", out, in)
+		}
+
+		var outAgain sample
+		if err := body.ReadAsJSON(&outAgain); err != nil {
+			t.Fatalf("ReadAsJSON() second read error = %v", err)
+		}
+
+		if outAgain != in {
+			t.Errorf("ReadAsJSON() second read = %#v, want %#v", outAgain, in)
 		}
 	})
 
@@ -116,11 +125,20 @@ func TestBufferedBodyXMLOperations(t *testing.T) {
 
 		var out sample
 		if err := body.ReadAsXML(&out); err != nil {
-			t.Fatalf("ReadAsXML() error = %v", err)
+			t.Fatalf("ReadAsXML() first read error = %v", err)
 		}
 
 		if out != in {
-			t.Errorf("ReadAsXML() = %#v, want %#v", out, in)
+			t.Errorf("ReadAsXML() first read = %#v, want %#v", out, in)
+		}
+
+		var outAgain sample
+		if err := body.ReadAsXML(&outAgain); err != nil {
+			t.Fatalf("ReadAsXML() second read error = %v", err)
+		}
+
+		if outAgain != in {
+			t.Errorf("ReadAsXML() second read = %#v, want %#v", outAgain, in)
 		}
 	})
 
