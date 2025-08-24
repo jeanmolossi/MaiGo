@@ -11,9 +11,8 @@ var _ contracts.Cookies = (*Cookies)(nil)
 
 // Cookies stores an in-memory collection of HTTP cookies. The zero value is
 // ready to use; the type is not safe for concurrent use—callers must
-// synchronize access when sharing the same instance across goroutines. The
-// helper newDefaultHTTPCookies pre-allocates space for a small number of
-// cookies.
+// synchronize access when sharing the same instance across goroutines. An
+// internal helper pre-allocates space for a small number of cookies.
 type Cookies struct {
 	cookies []*http.Cookie
 }
@@ -71,14 +70,10 @@ func (c *Cookies) Unwrap() []*http.Cookie {
 	out := make([]*http.Cookie, len(c.cookies))
 
 	for i, ck := range c.cookies {
-		if ck == nil { // defensive; Add ignores nil cookies
-			continue
-		}
-
 		clone := new(http.Cookie)
 		*clone = *ck
 
-		if len(ck.Unparsed) > 0 {
+		if ck.Unparsed != nil {
 			up := make([]string, len(ck.Unparsed))
 			copy(up, ck.Unparsed)
 			clone.Unparsed = up
@@ -99,5 +94,9 @@ func newDefaultHTTPCookies() *Cookies {
 
 // newCookiesWithCapacity returns a Cookies instance pre-allocated to capacity.
 func newCookiesWithCapacity(capacity int) *Cookies {
+	if capacity < 0 {
+		capacity = 0
+	}
+
 	return &Cookies{cookies: make([]*http.Cookie, 0, capacity)}
 }

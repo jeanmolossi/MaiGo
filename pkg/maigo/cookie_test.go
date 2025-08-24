@@ -48,6 +48,28 @@ func TestCookies_AddAndCount(t *testing.T) {
 	}
 }
 
+func TestCookies_Add_PreservesName(t *testing.T) {
+	t.Parallel()
+
+	c := newDefaultHTTPCookies()
+	orig := &http.Cookie{Name: "  session  ", Value: "v"}
+
+	c.Add(orig)
+
+	if orig.Name != "  session  " {
+		t.Fatalf("Add mutated original Name = %q, want %q", orig.Name, "  session  ")
+	}
+
+	got := c.Get(0)
+	if got == nil {
+		t.Fatalf("Get(0) returned nil")
+	}
+
+	if got.Name != orig.Name {
+		t.Fatalf("stored Name = %q, want %q", got.Name, orig.Name)
+	}
+}
+
 func TestCookies_Add_AliasesCallerPointer(t *testing.T) {
 	t.Parallel()
 
@@ -164,6 +186,26 @@ func TestCookies_UnwrapDeepCopy(t *testing.T) {
 
 	if c.Get(1) != nil {
 		t.Fatalf("appending to unwrapped slice affected original: %v", c.Get(1))
+	}
+}
+
+func TestCookies_Unwrap_PreservesEmptyUnparsed(t *testing.T) {
+	t.Parallel()
+
+	c := newDefaultHTTPCookies()
+	c.Add(&http.Cookie{Name: "n", Value: "v", Unparsed: []string{}})
+
+	u := c.Unwrap()
+	if len(u) != 1 {
+		t.Fatalf("Unwrap length = %d, want %d", len(u), 1)
+	}
+
+	if u[0].Unparsed == nil {
+		t.Fatalf("Unwrap returned nil Unparsed slice")
+	}
+
+	if len(u[0].Unparsed) != 0 {
+		t.Fatalf("Unwrap returned Unparsed len = %d, want %d", len(u[0].Unparsed), 0)
 	}
 }
 
