@@ -49,8 +49,14 @@ func TestCookies_Get(t *testing.T) {
 	cookie := &http.Cookie{Name: "session", Value: "abc"}
 	c.Add(cookie)
 
-	if got := c.Get(0); got != cookie {
-		t.Fatalf("Get(0) = %v, want %v", got, cookie)
+	got := c.Get(0)
+	if got == nil || got.Name != cookie.Name || got.Value != cookie.Value {
+		var gotName, gotValue string
+		if got != nil {
+			gotName, gotValue = got.Name, got.Value
+		}
+
+		t.Fatalf("Get(0) = {Name: %q, Value: %q}, want {Name: %q, Value: %q}", gotName, gotValue, cookie.Name, cookie.Value)
 	}
 
 	if got := c.Get(1); got != nil {

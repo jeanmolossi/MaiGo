@@ -2,6 +2,7 @@ package maigo
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/jeanmolossi/maigo/pkg/maigo/contracts"
 )
@@ -25,7 +26,7 @@ const defaultCookieCap = 5 // typical requests send fewer than five cookies
 // responsible for providing a fully initialized *http.Cookie and for any
 // duplicate management or additional validation.
 func (c *Cookies) Add(cookie *http.Cookie) {
-	if cookie == nil || cookie.Name == "" {
+	if cookie == nil || strings.TrimSpace(cookie.Name) == "" {
 		return
 	}
 
@@ -65,7 +66,7 @@ func (c *Cookies) Unwrap() []*http.Cookie {
 	out := make([]*http.Cookie, len(c.cookies))
 
 	for i, ck := range c.cookies {
-		if ck == nil {
+		if ck == nil { // defensive; Add ignores nil cookies
 			continue
 		}
 
