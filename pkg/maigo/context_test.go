@@ -48,6 +48,36 @@ func TestContextSetReplacesContext(t *testing.T) {
 	}
 }
 
+type uncomparableCtx struct {
+	context.Context
+	v []int
+}
+
+func TestContextSetWithUncomparableContext(t *testing.T) {
+	t.Parallel()
+
+	var c Context
+
+	ctx1 := uncomparableCtx{Context: context.Background(), v: []int{1}}
+	c.Set(ctx1)
+
+	ctx2 := uncomparableCtx{Context: context.Background(), v: []int{2}}
+
+	func() {
+		defer func() {
+			if r := recover(); r != nil {
+				t.Fatalf("Set() panicked: %v", r)
+			}
+		}()
+		c.Set(ctx2)
+	}()
+
+	got := c.Unwrap().(uncomparableCtx)
+	if got.v[0] != 2 {
+		t.Fatalf("Unwrap() = %v, want %v", got.v, ctx2.v)
+	}
+}
+
 func TestContextUnwrapReturnsNonNil(t *testing.T) {
 	t.Parallel()
 

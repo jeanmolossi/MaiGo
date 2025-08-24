@@ -8,6 +8,7 @@ package maigo
 
 import (
 	"context"
+	"reflect"
 
 	"github.com/jeanmolossi/maigo/pkg/maigo/contracts"
 )
@@ -27,8 +28,15 @@ func (c *Context) Set(ctx context.Context) {
 		return
 	}
 
-	if c.ctx == ctx {
-		return
+	if c.ctx != nil {
+		oldVal := reflect.ValueOf(c.ctx)
+		newVal := reflect.ValueOf(ctx)
+
+		if oldVal.IsValid() && newVal.IsValid() &&
+			oldVal.Kind() == reflect.Pointer && newVal.Kind() == reflect.Pointer &&
+			oldVal.Pointer() == newVal.Pointer() {
+			return
+		}
 	}
 
 	c.ctx = ctx
