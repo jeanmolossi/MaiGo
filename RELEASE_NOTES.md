@@ -1,3 +1,9 @@
+## v1.2.7
+
+- harden Cookies with nil and bounds checks and copy semantics
+- add unit tests and benchmarks for cookie helpers
+- fix HTTP initialism in cookie helper name
+
 ## v1.2.6
 
 - ensure `Context.Set` safely ignores nil, avoids redundant assignments, and compares pointer identities to prevent panics with uncomparable contexts

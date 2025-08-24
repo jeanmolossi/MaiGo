@@ -109,7 +109,7 @@ func newClientConfigBase(baseURL string) *ClientConfigBase {
 	return &ClientConfigBase{
 		httpClient:    newDefaultHTTPClient(),
 		httpHeader:    newDefaultHTTPHeader(),
-		httpCookie:    newDefaultHttpCookies(),
+		httpCookie:    newDefaultHTTPCookies(),
 		validations:   newDefaultValidations(validations),
 		ConfigBaseURL: newDefaultBaseURL(parsedURL),
 	}
@@ -141,7 +141,7 @@ func newBalancedClientConfigBase(baseURLs []string) *ClientConfigBase {
 	return &ClientConfigBase{
 		httpClient:    newDefaultHTTPClient(),
 		httpHeader:    newDefaultHTTPHeader(),
-		httpCookie:    newDefaultHttpCookies(),
+		httpCookie:    newDefaultHTTPCookies(),
 		validations:   newDefaultValidations(validations),
 		ConfigBaseURL: newBalancedBaseURL(parsedURLs),
 	}
