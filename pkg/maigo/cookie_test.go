@@ -40,6 +40,27 @@ func TestCookies_AddAndCount(t *testing.T) {
 	}
 }
 
+func TestCookies_Add_AliasesCallerPointer(t *testing.T) {
+	t.Parallel()
+
+	c := newDefaultHTTPCookies()
+
+	ck := &http.Cookie{Name: "session", Value: "abc"}
+	c.Add(ck)
+
+	ck.Value = "changed"
+
+	got := c.Get(0)
+	if got == nil || got.Value != "changed" {
+		var v string
+		if got != nil {
+			v = got.Value
+		}
+
+		t.Fatalf("after mutating original, Get(0).Value = %q, want %q", v, "changed")
+	}
+}
+
 func TestCookies_UnwrapEmpty(t *testing.T) {
 	t.Parallel()
 
@@ -73,6 +94,30 @@ func TestCookies_Get(t *testing.T) {
 
 	if got := c.Get(-1); got != nil {
 		t.Fatalf("Get(-1) = %v, want nil", got)
+	}
+}
+
+func TestCookies_Get_AliasesInternalState(t *testing.T) {
+	t.Parallel()
+
+	c := newDefaultHTTPCookies()
+	c.Add(&http.Cookie{Name: "session", Value: "abc"})
+
+	got := c.Get(0)
+	if got == nil {
+		t.Fatalf("Get(0) returned nil")
+	}
+
+	got.Value = "changed"
+
+	again := c.Get(0)
+	if again == nil || again.Value != "changed" {
+		var v string
+		if again != nil {
+			v = again.Value
+		}
+
+		t.Fatalf("after mutating retrieved cookie, Get(0).Value = %q, want %q", v, "changed")
 	}
 }
 
