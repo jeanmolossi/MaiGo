@@ -53,13 +53,34 @@ func TestContextUnwrapReturnsNonNil(t *testing.T) {
 
 	var c Context
 
-	if c.Unwrap() == nil {
-		t.Error("Unwrap() returned nil")
+	first := c.Unwrap()
+	if first == nil {
+		t.Fatal("Unwrap() returned nil")
+	}
+
+	second := c.Unwrap()
+	if second == nil {
+		t.Fatal("Unwrap() returned nil on second call")
+	}
+
+	if first != second {
+		t.Errorf("Unwrap() returned different instances: %p != %p", first, second)
 	}
 
 	var cp *Context
-	if cp.Unwrap() == nil {
-		t.Error("Unwrap() on nil receiver returned nil")
+
+	firstNil := cp.Unwrap()
+	if firstNil == nil {
+		t.Fatal("Unwrap() on nil receiver returned nil")
+	}
+
+	secondNil := cp.Unwrap()
+	if secondNil == nil {
+		t.Fatal("Unwrap() on nil receiver returned nil on second call")
+	}
+
+	if firstNil != secondNil {
+		t.Errorf("Unwrap() on nil receiver returned different instances: %p != %p", firstNil, secondNil)
 	}
 }
 
