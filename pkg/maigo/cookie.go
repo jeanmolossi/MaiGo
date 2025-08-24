@@ -8,22 +8,24 @@ import (
 
 var _ contracts.Cookies = (*Cookies)(nil)
 
-// Cookies stores an in-memory collection of HTTP cookies.
-//
-// The zero value is ready to use. The type is not safe for concurrent use;
-// callers must ensure their own synchronization if the same instance is
-// accessed from multiple goroutines. The helper newDefaultHTTPCookies
-// pre-allocates space for a small number of cookies.
+// Cookies stores an in-memory collection of HTTP cookies. The zero value is
+// ready to use; the type is not safe for concurrent use—callers must
+// synchronize access when sharing the same instance across goroutines. The
+// helper newDefaultHTTPCookies pre-allocates space for a small number of
+// cookies.
 type Cookies struct {
 	cookies []*http.Cookie
 }
 
+const defaultCookieCap = 5 // typical requests send fewer than five cookies
+
 // Add appends cookie to the collection.
 //
-// Nil cookies are ignored. The caller is responsible for providing a fully
-// initialized *http.Cookie and for any duplicate management or validation.
+// Nil cookies or cookies with an empty Name are ignored. The caller is
+// responsible for providing a fully initialized *http.Cookie and for any
+// duplicate management or additional validation.
 func (c *Cookies) Add(cookie *http.Cookie) {
-	if cookie == nil {
+	if cookie == nil || cookie.Name == "" {
 		return
 	}
 
@@ -50,18 +52,34 @@ func (c *Cookies) Get(index int) *http.Cookie {
 	return c.cookies[index]
 }
 
-// Unwrap returns a copy of the stored cookies.
+// Unwrap returns a deep copy of the stored cookies.
 //
-// The returned slice is a new allocation, so modifying it will not affect the
-// internal state. It returns nil when no cookies are stored. The caller may
-// freely modify the returned slice.
+// The returned slice and each *http.Cookie are new allocations, so modifying
+// them does not affect the internal state. It returns nil when no cookies are
+// stored.
 func (c *Cookies) Unwrap() []*http.Cookie {
 	if len(c.cookies) == 0 {
 		return nil
 	}
 
 	out := make([]*http.Cookie, len(c.cookies))
-	copy(out, c.cookies)
+
+	for i, ck := range c.cookies {
+		if ck == nil {
+			continue
+		}
+
+		clone := new(http.Cookie)
+		*clone = *ck
+
+		if len(ck.Unparsed) > 0 {
+			up := make([]string, len(ck.Unparsed))
+			copy(up, ck.Unparsed)
+			clone.Unparsed = up
+		}
+
+		out[i] = clone
+	}
 
 	return out
 }
@@ -71,6 +89,6 @@ func (c *Cookies) Unwrap() []*http.Cookie {
 // decide whether this pre-allocation is necessary.
 func newDefaultHTTPCookies() *Cookies {
 	return &Cookies{
-		cookies: make([]*http.Cookie, 0, 5), // pre-alloc 5 cookies
+		cookies: make([]*http.Cookie, 0, defaultCookieCap), // pre-alloc
 	}
 }

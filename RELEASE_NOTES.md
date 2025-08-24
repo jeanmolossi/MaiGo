@@ -1,8 +1,10 @@
+# Release Notes
+
 ## v1.2.7
 
-- harden Cookies with nil and bounds checks and copy semantics
-- add unit tests and benchmarks for cookie helpers
-- fix HTTP initialism in cookie helper name
+- Harden cookies with nil, name, and bounds checks and deep-copy semantics
+- Add unit tests and benchmarks for cookie helpers
+- Fix HTTP initialism in cookie helper name
 
 ## v1.2.6
 

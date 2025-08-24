@@ -24,8 +24,21 @@ func TestCookies_AddAndCount(t *testing.T) {
 	// adding a nil cookie should not change count
 	c.Add(nil)
 
+	// adding a cookie with empty name should not change count
+	c.Add(&http.Cookie{Value: "no-name"})
+
 	if c.Count() != 1 {
-		t.Fatalf("after nil Add Count() = %d, want %d", c.Count(), 1)
+		t.Fatalf("after invalid Add Count() = %d, want %d", c.Count(), 1)
+	}
+}
+
+func TestCookies_UnwrapEmpty(t *testing.T) {
+	t.Parallel()
+
+	c := newDefaultHTTPCookies()
+
+	if got := c.Unwrap(); got != nil {
+		t.Fatalf("Unwrap() = %v, want nil", got)
 	}
 }
 
@@ -49,11 +62,11 @@ func TestCookies_Get(t *testing.T) {
 	}
 }
 
-func TestCookies_Unwrap(t *testing.T) {
+func TestCookies_UnwrapDeepCopy(t *testing.T) {
 	t.Parallel()
 
 	c := newDefaultHTTPCookies()
-	cookie := &http.Cookie{Name: "session", Value: "abc"}
+	cookie := &http.Cookie{Name: "session", Value: "abc", Unparsed: []string{"a=b"}}
 	c.Add(cookie)
 
 	unwrapped := c.Unwrap()
@@ -61,25 +74,36 @@ func TestCookies_Unwrap(t *testing.T) {
 		t.Fatalf("Unwrap length = %d, want %d", len(unwrapped), 1)
 	}
 
-	// ensure modifications to unwrapped slice do not affect original
-	unwrapped[0] = &http.Cookie{Name: "changed", Value: "xyz"}
+	if unwrapped[0] == cookie {
+		t.Fatalf("Unwrap returned original pointer")
+	}
+
+	unwrapped[0].Name = "changed"
+	unwrapped[0].Unparsed[0] = "x=y"
 
 	got := c.Get(0)
-	if got.Name != "session" || got.Value != "abc" {
-		t.Fatalf("internal cookie modified: %v", got)
+	if got.Name != "session" || got.Unparsed[0] != "a=b" {
+		t.Fatalf("original cookie mutated: %v", got)
 	}
 }
 
 func BenchmarkCookies_Add(b *testing.B) {
+	c := newDefaultHTTPCookies()
+	cookie := &http.Cookie{Name: "k", Value: "v"}
+
+	b.ReportAllocs()
+	b.ResetTimer()
+
 	for i := 0; i < b.N; i++ {
-		c := newDefaultHTTPCookies()
-		c.Add(&http.Cookie{Name: "k", Value: "v"})
+		c.cookies = c.cookies[:0]
+		c.Add(cookie)
 	}
 }
 
 func BenchmarkCookies_Get(b *testing.B) {
 	c := newDefaultHTTPCookies()
 	c.Add(&http.Cookie{Name: "k", Value: "v"})
+	b.ReportAllocs()
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
@@ -93,6 +117,7 @@ func BenchmarkCookies_Unwrap(b *testing.B) {
 		c.Add(&http.Cookie{Name: "k", Value: "v"})
 	}
 
+	b.ReportAllocs()
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
