@@ -388,6 +388,12 @@ func TestUnbufferedBodyInvalidData(t *testing.T) {
 		t.Error("ReadAsJSON() expected error, got nil")
 	}
 
+	if s, err := body.ReadAsString(); err != nil {
+		t.Fatalf("ReadAsString() after JSON error = %v", err)
+	} else if s != "not-json" {
+		t.Errorf("ReadAsString() after JSON error = %q, want %q", s, "not-json")
+	}
+
 	body = newUnbufferedBody(io.NopCloser(bytes.NewBuffer(nil)))
 	if err := body.WriteAsString("<invalid>"); err != nil {
 		t.Fatalf("WriteAsString() error = %v", err)
@@ -396,6 +402,12 @@ func TestUnbufferedBodyInvalidData(t *testing.T) {
 	var x sample
 	if err := body.ReadAsXML(&x); err == nil {
 		t.Error("ReadAsXML() expected error, got nil")
+	}
+
+	if s, err := body.ReadAsString(); err != nil {
+		t.Fatalf("ReadAsString() after XML error = %v", err)
+	} else if s != "<invalid>" {
+		t.Errorf("ReadAsString() after XML error = %q, want %q", s, "<invalid>")
 	}
 
 	if err := body.WriteAsJSON(func() {}); err == nil {

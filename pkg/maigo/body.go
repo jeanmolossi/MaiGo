@@ -58,16 +58,16 @@ func (u *UnbufferedBody) ReadAsJSON(obj any) (err error) {
 
 	data, err := io.ReadAll(prev)
 	if err != nil {
+		_ = prev.Close()
 		return fmt.Errorf("failed reading body as JSON: %w", err)
 	}
+
+	u.reader = io.NopCloser(bytes.NewReader(data))
+	_ = prev.Close()
 
 	if err = json.Unmarshal(data, obj); err != nil {
 		return fmt.Errorf("failed decoding body as JSON: %w", err)
 	}
-
-	u.reader = io.NopCloser(bytes.NewReader(data))
-
-	_ = prev.Close()
 
 	return nil
 }
@@ -100,16 +100,16 @@ func (u *UnbufferedBody) ReadAsXML(obj any) (err error) {
 
 	data, err := io.ReadAll(prev)
 	if err != nil {
+		_ = prev.Close()
 		return fmt.Errorf("failed reading body as XML: %w", err)
 	}
+
+	u.reader = io.NopCloser(bytes.NewReader(data))
+	_ = prev.Close()
 
 	if err = xml.Unmarshal(data, obj); err != nil {
 		return fmt.Errorf("failed decoding body as XML: %w", err)
 	}
-
-	u.reader = io.NopCloser(bytes.NewReader(data))
-
-	_ = prev.Close()
 
 	return nil
 }
