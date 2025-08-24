@@ -27,6 +27,9 @@ func TestCookies_AddAndCount(t *testing.T) {
 	// adding a cookie with empty name should not change count
 	c.Add(&http.Cookie{Value: "no-name"})
 
+	// adding a cookie with whitespace-only name should not change count
+	c.Add(&http.Cookie{Name: "   ", Value: "blank-name"})
+
 	if c.Count() != 1 {
 		t.Fatalf("after invalid Add Count() = %d, want %d", c.Count(), 1)
 	}
@@ -94,16 +97,29 @@ func TestCookies_UnwrapDeepCopy(t *testing.T) {
 }
 
 func BenchmarkCookies_Add(b *testing.B) {
-	c := newDefaultHTTPCookies()
 	cookie := &http.Cookie{Name: "k", Value: "v"}
 
-	b.ReportAllocs()
-	b.ResetTimer()
+	b.Run("prealloc", func(b *testing.B) {
+		c := &Cookies{cookies: make([]*http.Cookie, 0, b.N)}
 
-	for i := 0; i < b.N; i++ {
-		c.cookies = c.cookies[:0]
-		c.Add(cookie)
-	}
+		b.ReportAllocs()
+		b.ResetTimer()
+
+		for i := 0; i < b.N; i++ {
+			c.Add(cookie)
+		}
+	})
+
+	b.Run("growth", func(b *testing.B) {
+		c := &Cookies{}
+
+		b.ReportAllocs()
+		b.ResetTimer()
+
+		for i := 0; i < b.N; i++ {
+			c.Add(cookie)
+		}
+	})
 }
 
 func BenchmarkCookies_Get(b *testing.B) {

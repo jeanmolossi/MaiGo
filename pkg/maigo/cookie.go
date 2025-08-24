@@ -22,9 +22,10 @@ const defaultCookieCap = 5 // typical requests send fewer than five cookies
 
 // Add appends cookie to the collection.
 //
-// Nil cookies or cookies with an empty Name are ignored. The caller is
-// responsible for providing a fully initialized *http.Cookie and for any
-// duplicate management or additional validation.
+// Nil cookies or cookies whose Name is empty after trimming whitespace with
+// strings.TrimSpace are ignored. The Name is trimmed, so callers must supply a
+// non-blank Name after trimming and remain responsible for duplicate
+// management or any additional validation.
 func (c *Cookies) Add(cookie *http.Cookie) {
 	if cookie == nil || strings.TrimSpace(cookie.Name) == "" {
 		return
@@ -43,8 +44,10 @@ func (c *Cookies) Count() int {
 
 // Get retrieves the cookie at index.
 //
-// It returns nil if index is out of bounds. Callers must check for a nil
-// result before dereferencing and ensure the index provided is intended.
+// The returned pointer aliases internal state; mutating it updates the
+// underlying cookie stored by Cookies. Callers needing an independent copy
+// should use Unwrap. It returns nil if index is out of bounds, so callers must
+// check for nil before dereferencing and ensure the index is intended.
 func (c *Cookies) Get(index int) *http.Cookie {
 	if index < 0 || index >= len(c.cookies) {
 		return nil
