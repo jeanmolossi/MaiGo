@@ -47,13 +47,25 @@ func (u *UnbufferedBody) Read(p []byte) (n int, err error) {
 	return
 }
 
-// ReadAsJSON implements contracts.Body.
+// ReadAsJSON reads the full body, decodes it into obj and replaces the
+// underlying reader so the data can be consumed again. Decoding directly from
+// u.reader would advance it, making subsequent reads return no data.
 func (u *UnbufferedBody) ReadAsJSON(obj any) (err error) {
 	u.mutex.Lock()
-	err = json.NewDecoder(u.reader).Decode(obj)
-	u.mutex.Unlock()
+	defer u.mutex.Unlock()
 
-	return
+	data, err := io.ReadAll(u.reader)
+	if err != nil {
+		return fmt.Errorf("failed reading body as JSON: %w", err)
+	}
+
+	if err = json.Unmarshal(data, obj); err != nil {
+		return fmt.Errorf("failed decoding body as JSON: %w", err)
+	}
+
+	u.reader = io.NopCloser(bytes.NewReader(data))
+
+	return nil
 }
 
 // WriteAsJSON implements contracts.Body.
@@ -73,13 +85,25 @@ func (u *UnbufferedBody) WriteAsJSON(obj any) (err error) {
 	return
 }
 
-// ReadAsXML implements contracts.Body.
+// ReadAsXML reads the full body, decodes it into obj and replaces the reader so
+// future reads see the same data. Without copying the bytes, decoding would
+// consume u.reader.
 func (u *UnbufferedBody) ReadAsXML(obj any) (err error) {
 	u.mutex.Lock()
-	err = xml.NewDecoder(u.reader).Decode(obj)
-	u.mutex.Unlock()
+	defer u.mutex.Unlock()
 
-	return
+	data, err := io.ReadAll(u.reader)
+	if err != nil {
+		return fmt.Errorf("failed reading body as XML: %w", err)
+	}
+
+	if err = xml.Unmarshal(data, obj); err != nil {
+		return fmt.Errorf("failed decoding body as XML: %w", err)
+	}
+
+	u.reader = io.NopCloser(bytes.NewReader(data))
+
+	return nil
 }
 
 // WriteAsXML implements contracts.Body.

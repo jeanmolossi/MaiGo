@@ -270,41 +270,91 @@ func TestUnbufferedBodyStringOperations(t *testing.T) {
 func TestUnbufferedBodyJSONOperations(t *testing.T) {
 	t.Parallel()
 
-	body := newUnbufferedBody(io.NopCloser(bytes.NewBuffer(nil)))
-	in := sample{Name: "dan"}
+	t.Run("round trip", func(t *testing.T) {
+		body := newUnbufferedBody(io.NopCloser(bytes.NewBuffer(nil)))
+		in := sample{Name: "dan"}
 
-	if err := body.WriteAsJSON(in); err != nil {
-		t.Fatalf("WriteAsJSON() error = %v", err)
-	}
+		if err := body.WriteAsJSON(in); err != nil {
+			t.Fatalf("WriteAsJSON() error = %v", err)
+		}
 
-	var out sample
-	if err := body.ReadAsJSON(&out); err != nil {
-		t.Fatalf("ReadAsJSON() error = %v", err)
-	}
+		var out sample
+		if err := body.ReadAsJSON(&out); err != nil {
+			t.Fatalf("ReadAsJSON() error = %v", err)
+		}
 
-	if out != in {
-		t.Errorf("ReadAsJSON() = %#v, want %#v", out, in)
-	}
+		if out != in {
+			t.Errorf("ReadAsJSON() = %#v, want %#v", out, in)
+		}
+	})
+
+	t.Run("rewrite replaces content", func(t *testing.T) {
+		body := newUnbufferedBody(io.NopCloser(bytes.NewBuffer(nil)))
+		first := sample{Name: "first"}
+		second := sample{Name: "second"}
+
+		if err := body.WriteAsJSON(first); err != nil {
+			t.Fatalf("WriteAsJSON() first write error = %v", err)
+		}
+
+		if err := body.WriteAsJSON(second); err != nil {
+			t.Fatalf("WriteAsJSON() second write error = %v", err)
+		}
+
+		var out sample
+		if err := body.ReadAsJSON(&out); err != nil {
+			t.Fatalf("ReadAsJSON() after rewrite error = %v", err)
+		}
+
+		if out != second {
+			t.Errorf("ReadAsJSON() after rewrite = %#v, want %#v", out, second)
+		}
+	})
 }
 
 func TestUnbufferedBodyXMLOperations(t *testing.T) {
 	t.Parallel()
 
-	body := newUnbufferedBody(io.NopCloser(bytes.NewBuffer(nil)))
-	in := sample{Name: "eric"}
+	t.Run("round trip", func(t *testing.T) {
+		body := newUnbufferedBody(io.NopCloser(bytes.NewBuffer(nil)))
+		in := sample{Name: "eric"}
 
-	if err := body.WriteAsXML(in); err != nil {
-		t.Fatalf("WriteAsXML() error = %v", err)
-	}
+		if err := body.WriteAsXML(in); err != nil {
+			t.Fatalf("WriteAsXML() error = %v", err)
+		}
 
-	var out sample
-	if err := body.ReadAsXML(&out); err != nil {
-		t.Fatalf("ReadAsXML() error = %v", err)
-	}
+		var out sample
+		if err := body.ReadAsXML(&out); err != nil {
+			t.Fatalf("ReadAsXML() error = %v", err)
+		}
 
-	if out != in {
-		t.Errorf("ReadAsXML() = %#v, want %#v", out, in)
-	}
+		if out != in {
+			t.Errorf("ReadAsXML() = %#v, want %#v", out, in)
+		}
+	})
+
+	t.Run("rewrite replaces content", func(t *testing.T) {
+		body := newUnbufferedBody(io.NopCloser(bytes.NewBuffer(nil)))
+		first := sample{Name: "first"}
+		second := sample{Name: "second"}
+
+		if err := body.WriteAsXML(first); err != nil {
+			t.Fatalf("WriteAsXML() first write error = %v", err)
+		}
+
+		if err := body.WriteAsXML(second); err != nil {
+			t.Fatalf("WriteAsXML() second write error = %v", err)
+		}
+
+		var out sample
+		if err := body.ReadAsXML(&out); err != nil {
+			t.Fatalf("ReadAsXML() after rewrite error = %v", err)
+		}
+
+		if out != second {
+			t.Errorf("ReadAsXML() after rewrite = %#v, want %#v", out, second)
+		}
+	})
 }
 
 func TestUnbufferedBodyInvalidData(t *testing.T) {
