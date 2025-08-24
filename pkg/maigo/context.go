@@ -14,13 +14,19 @@ type Context struct {
 
 // Set implements contracts.Context.
 func (c *Context) Set(ctx context.Context) {
-	if ctx != nil {
-		c.ctx = ctx
+	if c == nil || ctx == nil {
+		return
 	}
+
+	c.ctx = ctx
 }
 
 // Unwrap implements contracts.Context.
 func (c *Context) Unwrap() context.Context {
+	if c == nil || c.ctx == nil {
+		return context.Background()
+	}
+
 	return c.ctx
 }
 
