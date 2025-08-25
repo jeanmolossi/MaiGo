@@ -83,7 +83,7 @@ func TestCookies_AddAndCount(t *testing.T) {
 	}
 }
 
-func TestCookies_Add_PreservesName(t *testing.T) {
+func TestCookies_Add_NormalizesName(t *testing.T) {
 	t.Parallel()
 
 	c := newDefaultHTTPCookies()
@@ -95,17 +95,13 @@ func TestCookies_Add_PreservesName(t *testing.T) {
 		t.Fatalf("Add mutated original Name = %q, want %q", orig.Name, "  session  ")
 	}
 
-	if c.Len() != 1 {
-		t.Fatalf("Len() after Add = %d, want %d", c.Len(), 1)
-	}
-
 	got := c.Get(0)
 	if got == nil {
 		t.Fatalf("Get(0) returned nil")
 	}
 
-	if got.Name != orig.Name {
-		t.Fatalf("stored Name = %q, want %q", got.Name, orig.Name)
+	if got.Name != "session" {
+		t.Fatalf("stored Name = %q, want %q", got.Name, "session")
 	}
 }
 

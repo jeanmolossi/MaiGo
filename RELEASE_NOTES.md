@@ -6,8 +6,7 @@
 - Added `Len() int` method to `contracts.Cookies` interface
 
 ### Features
-- Harden cookies with nil, RFC-compliant name validation, and bounds checks and
-  deep-copy semantics (Add and Get clone cookies)
+- Harden cookies with nil, RFC-compliant name validation, bounds checks, and deep copy semantics (Add and Get clone cookies and normalize stored Names)
 - Add unit tests and benchmarks for cookie helpers
 - Fix HTTP initialism in cookie helper name
 - Introduce Len alias and deprecate Count in cookie interface
