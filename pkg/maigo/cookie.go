@@ -2,7 +2,6 @@ package maigo
 
 import (
 	"net/http"
-	"strings"
 
 	"github.com/jeanmolossi/maigo/pkg/maigo/contracts"
 )
@@ -17,10 +16,41 @@ type Cookies struct {
 
 const defaultCookieCap = 5 // typical requests send fewer than five cookies
 
-// Add clones cookie and appends it. Nil receiver, nil cookie, or blank Name
-// (after strings.TrimSpace) are ignored.
+// isValidCookieName reports whether name consists solely of tchar characters as
+// defined by RFC 6265 §4.1.1 and RFC 9110 §5.6.2. The string must be non-empty
+// and contain only characters in !#$%&'*+-.^_|~0-9A-Za-z`.
+func isValidCookieName(name string) bool {
+	if name == "" {
+		return false
+	}
+
+	for i := 0; i < len(name); i++ {
+		c := name[i]
+
+		switch {
+		case '0' <= c && c <= '9':
+			continue
+		case 'A' <= c && c <= 'Z':
+			continue
+		case 'a' <= c && c <= 'z':
+			continue
+		case c == '!' || c == '#' || c == '$' || c == '%' || c == '&' ||
+			c == '\'' || c == '*' || c == '+' || c == '-' || c == '.' ||
+			c == '^' || c == '_' || c == '`' || c == '|' || c == '~':
+			continue
+		default:
+			return false
+		}
+	}
+
+	return true
+}
+
+// Add clones cookie and appends it. Nil receiver, nil cookie, or invalid Name
+// (as determined by isValidCookieName) are ignored. Duplicates are caller
+// responsibility.
 func (c *Cookies) Add(cookie *http.Cookie) {
-	if c == nil || cookie == nil || strings.TrimSpace(cookie.Name) == "" {
+	if c == nil || cookie == nil || !isValidCookieName(cookie.Name) {
 		return
 	}
 

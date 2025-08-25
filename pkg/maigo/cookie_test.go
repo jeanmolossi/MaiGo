@@ -24,6 +24,28 @@ func Test_newCookiesWithCapacity_Negative(t *testing.T) {
 	}
 }
 
+func Test_isValidCookieName(t *testing.T) {
+	t.Parallel()
+
+	cases := []struct {
+		name  string
+		valid bool
+	}{
+		{"session", true},
+		{"token-123", true},
+		{"", false},
+		{"bad name", false},
+		{";bad", false},
+		{"bad;name", false},
+	}
+
+	for _, tc := range cases {
+		if got := isValidCookieName(tc.name); got != tc.valid {
+			t.Fatalf("isValidCookieName(%q) = %v, want %v", tc.name, got, tc.valid)
+		}
+	}
+}
+
 func TestCookies_AddAndCount(t *testing.T) {
 	t.Parallel()
 
@@ -49,15 +71,14 @@ func TestCookies_AddAndCount(t *testing.T) {
 	// adding a cookie with whitespace-only name should not change count
 	c.Add(&http.Cookie{Name: "   ", Value: "blank-name"})
 
-	if c.Len() != 1 {
-		t.Fatalf("after invalid Add Len() = %d, want %d", c.Len(), 1)
-	}
+	// adding a cookie with invalid characters should not change count
+	c.Add(&http.Cookie{Name: "bad;name", Value: "x"})
 
-	// adding a cookie with surrounding whitespace but non-empty after trimming should succeed
+	// adding a cookie with spaces in the name should not change count
 	c.Add(&http.Cookie{Name: "  session  ", Value: "xyz"})
 
-	if c.Len() != 2 {
-		t.Fatalf("after trimmed Add Len() = %d, want %d", c.Len(), 2)
+	if c.Len() != 1 {
+		t.Fatalf("after invalid Add Len() = %d, want %d", c.Len(), 1)
 	}
 
 	if c.Len() != c.Count() {
@@ -69,12 +90,12 @@ func TestCookies_Add_PreservesName(t *testing.T) {
 	t.Parallel()
 
 	c := newDefaultHTTPCookies()
-	orig := &http.Cookie{Name: "  session  ", Value: "v"}
+	orig := &http.Cookie{Name: "session", Value: "v"}
 
 	c.Add(orig)
 
-	if orig.Name != "  session  " {
-		t.Fatalf("Add mutated original Name = %q, want %q", orig.Name, "  session  ")
+	if orig.Name != "session" {
+		t.Fatalf("Add mutated original Name = %q, want %q", orig.Name, "session")
 	}
 
 	got := c.Get(0)
@@ -84,6 +105,26 @@ func TestCookies_Add_PreservesName(t *testing.T) {
 
 	if got.Name != orig.Name {
 		t.Fatalf("stored Name = %q, want %q", got.Name, orig.Name)
+	}
+}
+
+func TestCookies_Add_InvalidName(t *testing.T) {
+	t.Parallel()
+
+	c := newDefaultHTTPCookies()
+
+	invalid := []*http.Cookie{
+		{Name: "bad name", Value: "v"},
+		{Name: "bad;name", Value: "v"},
+		{Name: "", Value: "v"},
+	}
+
+	for _, ck := range invalid {
+		c.Add(ck)
+	}
+
+	if c.Len() != 0 {
+		t.Fatalf("Len() = %d, want %d", c.Len(), 0)
 	}
 }
 
