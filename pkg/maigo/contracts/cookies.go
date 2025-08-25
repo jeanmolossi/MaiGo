@@ -26,7 +26,10 @@ type Cookies interface {
 	Unwrap() []*http.Cookie
 	// Get retrieves a cookie by index.
 	Get(index int) *http.Cookie
+	// Len reports how many cookies are stored.
+	Len() int
 	// Count reports how many cookies are stored.
+	// Deprecated: use Len.
 	Count() int
 	// Add inserts a new cookie into the store.
 	Add(cookie *http.Cookie)

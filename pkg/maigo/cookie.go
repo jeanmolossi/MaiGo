@@ -37,6 +37,8 @@ func (c *Cookies) Add(cookie *http.Cookie) {
 
 // Count returns the number of stored cookies.
 //
+// Deprecated: use Len.
+//
 // It reports the raw number of cookies and does not account for duplicates. A
 // nil receiver reports zero.
 func (c *Cookies) Count() int {
