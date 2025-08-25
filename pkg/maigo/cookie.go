@@ -47,11 +47,11 @@ func isValidCookieName(name string) bool {
 	return true
 }
 
-// Add clones cookie, normalizes its Name, and appends it. Nil receiver or nil
-// cookie are ignored. The Name is checked with strings.TrimSpace and must be
-// non-empty and pass isValidCookieName. The stored cookie's Name is set to the
-// trimmed value; the input cookie is not mutated. Handling duplicates remains
-// the caller's responsibility.
+// Add creates a copy of cookie, trims the Name on the copy using
+// strings.TrimSpace, and appends it. Nil receiver or nil cookie are ignored.
+// The Name must be non-empty after trimming and pass isValidCookieName. The
+// stored cookie's Name is the trimmed value; the input cookie is not mutated.
+// Handling duplicates remains the caller's responsibility.
 func (c *Cookies) Add(cookie *http.Cookie) {
 	if c == nil || cookie == nil {
 		return
