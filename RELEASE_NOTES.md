@@ -2,6 +2,10 @@
 
 ## v1.2.7
 
+### BREAKING CHANGES
+- Added `Len() int` method to `contracts.Cookies` interface
+
+### Features
 - Harden cookies with nil, name, and bounds checks and deep-copy semantics
 - Add unit tests and benchmarks for cookie helpers
 - Fix HTTP initialism in cookie helper name
