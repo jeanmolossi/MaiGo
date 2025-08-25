@@ -34,6 +34,7 @@ func Test_isValidCookieName(t *testing.T) {
 		{"session", true},
 		{"token-123", true},
 		{"_-~^|`", true},
+		{"!", true},
 		{"", false},
 		{"bad name", false},
 		{"name\xFF", false},
@@ -42,9 +43,14 @@ func Test_isValidCookieName(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		if got := isValidCookieName(tc.name); got != tc.valid {
-			t.Fatalf("isValidCookieName(%q) = %v, want %v", tc.name, got, tc.valid)
-		}
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			if got := isValidCookieName(tc.name); got != tc.valid {
+				t.Fatalf("isValidCookieName(%q) = %v, want %v", tc.name, got, tc.valid)
+			}
+		})
 	}
 }
 
@@ -304,7 +310,7 @@ func BenchmarkCookies_Add(b *testing.B) {
 	})
 
 	b.Run("growth", func(b *testing.B) {
-		c := &Cookies{}
+		c := newCookiesWithCapacity(0)
 
 		b.ReportAllocs()
 		b.ResetTimer()
