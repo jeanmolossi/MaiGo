@@ -68,11 +68,7 @@ func (c *Cookies) Add(cookie *http.Cookie) {
 //
 // Deprecated: use Len. Count will be removed in v2.
 func (c *Cookies) Count() int {
-	if c == nil {
-		return 0
-	}
-
-	return len(c.cookies)
+	return c.Len()
 }
 
 // Len reports how many cookies are stored.
