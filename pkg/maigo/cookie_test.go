@@ -33,8 +33,10 @@ func Test_isValidCookieName(t *testing.T) {
 	}{
 		{"session", true},
 		{"token-123", true},
+		{"_-~^|`", true},
 		{"", false},
 		{"bad name", false},
+		{"name\xFF", false},
 		{";bad", false},
 		{"bad;name", false},
 	}
