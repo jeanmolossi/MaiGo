@@ -126,7 +126,7 @@ func newRequestConfigBase(method method.Type, path string) *RequestConfigBase {
 	return &RequestConfigBase{
 		ctx:          newDefaultContext(),
 		httpHeader:   newDefaultHTTPHeader(),
-		httpCookies:  newDefaultHttpCookies(),
+		httpCookies:  newDefaultHTTPCookies(),
 		method:       method,
 		path:         path,
 		searchParams: url.Values{},
