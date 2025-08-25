@@ -19,8 +19,8 @@ func Test_newCookiesWithCapacity_Negative(t *testing.T) {
 		t.Fatalf("newCookiesWithCapacity(-1) returned nil")
 	}
 
-	if c.Count() != 0 {
-		t.Fatalf("Count() = %d, want %d", c.Count(), 0)
+	if c.Len() != 0 {
+		t.Fatalf("Len() = %d, want %d", c.Len(), 0)
 	}
 }
 
@@ -29,15 +29,15 @@ func TestCookies_AddAndCount(t *testing.T) {
 
 	c := newDefaultHTTPCookies()
 
-	if c.Count() != 0 {
-		t.Fatalf("Count() = %d, want %d", c.Count(), 0)
+	if c.Len() != 0 {
+		t.Fatalf("Len() = %d, want %d", c.Len(), 0)
 	}
 
 	cookie := &http.Cookie{Name: "session", Value: "abc"}
 	c.Add(cookie)
 
-	if c.Count() != 1 {
-		t.Fatalf("Count() = %d, want %d", c.Count(), 1)
+	if c.Len() != 1 {
+		t.Fatalf("Len() = %d, want %d", c.Len(), 1)
 	}
 
 	// adding a nil cookie should not change count
@@ -49,15 +49,15 @@ func TestCookies_AddAndCount(t *testing.T) {
 	// adding a cookie with whitespace-only name should not change count
 	c.Add(&http.Cookie{Name: "   ", Value: "blank-name"})
 
-	if c.Count() != 1 {
-		t.Fatalf("after invalid Add Count() = %d, want %d", c.Count(), 1)
+	if c.Len() != 1 {
+		t.Fatalf("after invalid Add Len() = %d, want %d", c.Len(), 1)
 	}
 
 	// adding a cookie with surrounding whitespace but non-empty after trimming should succeed
 	c.Add(&http.Cookie{Name: "  session  ", Value: "xyz"})
 
-	if c.Count() != 2 {
-		t.Fatalf("after trimmed Add Count() = %d, want %d", c.Count(), 2)
+	if c.Len() != 2 {
+		t.Fatalf("after trimmed Add Len() = %d, want %d", c.Len(), 2)
 	}
 
 	if c.Len() != c.Count() {
@@ -87,24 +87,23 @@ func TestCookies_Add_PreservesName(t *testing.T) {
 	}
 }
 
-func TestCookies_Add_AliasesCallerPointer(t *testing.T) {
+func TestCookies_Add_ClonesInput(t *testing.T) {
 	t.Parallel()
 
 	c := newDefaultHTTPCookies()
-
 	ck := &http.Cookie{Name: "session", Value: "abc"}
 	c.Add(ck)
 
 	ck.Value = "changed"
 
 	got := c.Get(0)
-	if got == nil || got.Value != "changed" {
+	if got == nil || got.Value != "abc" {
 		var v string
 		if got != nil {
 			v = got.Value
 		}
 
-		t.Fatalf("after mutating original, Get(0).Value = %q, want %q", v, "changed")
+		t.Fatalf("stored cookie Value = %q, want %q", v, "abc")
 	}
 }
 
@@ -168,7 +167,7 @@ func TestCookies_Get(t *testing.T) {
 	}
 }
 
-func TestCookies_Get_AliasesInternalState(t *testing.T) {
+func TestCookies_Get_ReturnsCopy(t *testing.T) {
 	t.Parallel()
 
 	c := newDefaultHTTPCookies()
@@ -182,13 +181,13 @@ func TestCookies_Get_AliasesInternalState(t *testing.T) {
 	got.Value = "changed"
 
 	again := c.Get(0)
-	if again == nil || again.Value != "changed" {
+	if again == nil || again.Value != "abc" {
 		var v string
 		if again != nil {
 			v = again.Value
 		}
 
-		t.Fatalf("after mutating retrieved cookie, Get(0).Value = %q, want %q", v, "changed")
+		t.Fatalf("after mutating copy, Get(0).Value = %q, want %q", v, "abc")
 	}
 }
 
@@ -221,8 +220,8 @@ func TestCookies_UnwrapDeepCopy(t *testing.T) {
 		t.Fatalf("original cookie mutated: %v", got)
 	}
 
-	if c.Count() != 1 {
-		t.Fatalf("original slice length changed: %d", c.Count())
+	if c.Len() != 1 {
+		t.Fatalf("original slice length changed: %d", c.Len())
 	}
 
 	if c.Get(1) != nil {

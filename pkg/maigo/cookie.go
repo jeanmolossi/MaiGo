@@ -9,38 +9,27 @@ import (
 
 var _ contracts.Cookies = (*Cookies)(nil)
 
-// Cookies stores an in-memory collection of HTTP cookies. The zero value is
-// ready to use; the type is not safe for concurrent use; callers must
-// synchronize access when sharing the same instance across goroutines. An
-// internal helper pre-allocates space for a small number of cookies.
+// Cookies holds HTTP cookies in memory. The zero value is ready to use, but the
+// type is not safe for concurrent use.
 type Cookies struct {
 	cookies []*http.Cookie
 }
 
 const defaultCookieCap = 5 // typical requests send fewer than five cookies
 
-// Add appends cookie to the collection.
-//
-// A nil receiver causes Add to do nothing. Nil cookies or cookies whose Name is
-// empty after trimming whitespace with strings.TrimSpace are ignored. The Name
-// is checked with TrimSpace but not mutated, so callers must supply a non-blank
-// Name after trimming and remain responsible for duplicate management or any
-// additional validation. Add stores the caller's pointer; mutating the cookie
-// after adding will affect the stored value.
+// Add clones cookie and appends it. Nil receiver, nil cookie, or blank Name
+// (after strings.TrimSpace) are ignored.
 func (c *Cookies) Add(cookie *http.Cookie) {
 	if c == nil || cookie == nil || strings.TrimSpace(cookie.Name) == "" {
 		return
 	}
 
-	c.cookies = append(c.cookies, cookie)
+	c.cookies = append(c.cookies, cloneCookie(cookie))
 }
 
-// Count returns the number of stored cookies.
+// Count reports how many cookies are stored.
 //
-// Deprecated: use Len.
-//
-// It reports the raw number of cookies and does not account for duplicates. A
-// nil receiver reports zero.
+// Deprecated: use Len. Count will be removed in v2.
 func (c *Cookies) Count() int {
 	if c == nil {
 		return 0
@@ -49,8 +38,7 @@ func (c *Cookies) Count() int {
 	return len(c.cookies)
 }
 
-// Len mirrors Count and returns the number of stored cookies. It also reports
-// zero for a nil receiver.
+// Len reports how many cookies are stored.
 func (c *Cookies) Len() int {
 	if c == nil {
 		return 0
@@ -59,52 +47,30 @@ func (c *Cookies) Len() int {
 	return len(c.cookies)
 }
 
-// Get retrieves the cookie at index.
-//
-// The returned pointer aliases internal state; mutating it updates the
-// underlying cookie stored by Cookies. Callers needing an independent copy
-// should use Unwrap. It returns nil if the receiver is nil or index is out of
-// bounds, so callers must check for nil before dereferencing and ensure the
-// index is intended.
+// Get returns a clone of the cookie at index or nil if out of range.
 func (c *Cookies) Get(index int) *http.Cookie {
 	if c == nil || index < 0 || index >= len(c.cookies) {
 		return nil
 	}
 
-	return c.cookies[index]
+	return cloneCookie(c.cookies[index])
 }
 
-// Unwrap returns a deep copy of the stored cookies.
-//
-// The returned slice and each *http.Cookie are new allocations, so modifying
-// them does not affect the internal state. It returns nil when the receiver is
-// nil or no cookies are stored.
+// Unwrap returns deep copies of all stored cookies or nil when empty.
 func (c *Cookies) Unwrap() []*http.Cookie {
 	if c == nil || len(c.cookies) == 0 {
 		return nil
 	}
 
 	out := make([]*http.Cookie, len(c.cookies))
-
 	for i, ck := range c.cookies {
-		clone := new(http.Cookie)
-		*clone = *ck
-
-		if ck.Unparsed != nil {
-			up := make([]string, len(ck.Unparsed))
-			copy(up, ck.Unparsed)
-			clone.Unparsed = up
-		}
-
-		out[i] = clone
+		out[i] = cloneCookie(ck)
 	}
 
 	return out
 }
 
-// newDefaultHTTPCookies creates a Cookies instance with space for a few
-// cookies. The zero value of Cookies is also ready to use, so callers should
-// decide whether this pre-allocation is necessary.
+// newDefaultHTTPCookies creates a Cookies instance with room for a few cookies.
 func newDefaultHTTPCookies() *Cookies {
 	return newCookiesWithCapacity(defaultCookieCap)
 }
@@ -116,4 +82,21 @@ func newCookiesWithCapacity(capacity int) *Cookies {
 	}
 
 	return &Cookies{cookies: make([]*http.Cookie, 0, capacity)}
+}
+
+func cloneCookie(src *http.Cookie) *http.Cookie {
+	if src == nil {
+		return nil
+	}
+
+	dst := new(http.Cookie)
+	*dst = *src
+
+	if src.Unparsed != nil {
+		up := make([]string, len(src.Unparsed))
+		copy(up, src.Unparsed)
+		dst.Unparsed = up
+	}
+
+	return dst
 }
