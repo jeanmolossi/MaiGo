@@ -2,6 +2,7 @@ package maigo
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/jeanmolossi/maigo/pkg/maigo/contracts"
 )
@@ -46,11 +47,17 @@ func isValidCookieName(name string) bool {
 	return true
 }
 
-// Add clones cookie and appends it. Nil receiver, nil cookie, or invalid Name
-// (as determined by isValidCookieName) are ignored. Duplicates are caller
+// Add clones cookie and appends it. Nil receiver or nil cookie are ignored.
+// The Name is checked with strings.TrimSpace and must be non-empty and pass
+// isValidCookieName; the original cookie is not mutated. Duplicates are caller
 // responsibility.
 func (c *Cookies) Add(cookie *http.Cookie) {
-	if c == nil || cookie == nil || !isValidCookieName(cookie.Name) {
+	if c == nil || cookie == nil {
+		return
+	}
+
+	name := strings.TrimSpace(cookie.Name)
+	if name == "" || !isValidCookieName(name) {
 		return
 	}
 
