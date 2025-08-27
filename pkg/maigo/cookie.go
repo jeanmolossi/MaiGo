@@ -17,6 +17,23 @@ type Cookies struct {
 
 const defaultCookieCap = 5 // typical requests send fewer than five cookies
 
+var tcharTable = func() [128]bool {
+	var tbl [128]bool
+	for c := '0'; c <= '9'; c++ {
+		tbl[c] = true
+	}
+	for c := 'A'; c <= 'Z'; c++ {
+		tbl[c] = true
+	}
+	for c := 'a'; c <= 'z'; c++ {
+		tbl[c] = true
+	}
+	for _, c := range "!#$%&'*+-.^_|~`" {
+		tbl[c] = true
+	}
+	return tbl
+}()
+
 // isValidCookieName reports whether name consists solely of tchar characters as
 // defined by RFC 6265 §4.1.1 and RFC 9110 §5.6.2. The string must be non-empty
 // and contain only characters in !#$%&'*+-.^_|~0-9A-Za-z`.
@@ -27,19 +44,7 @@ func isValidCookieName(name string) bool {
 
 	for i := 0; i < len(name); i++ {
 		c := name[i]
-
-		switch {
-		case '0' <= c && c <= '9':
-			continue
-		case 'A' <= c && c <= 'Z':
-			continue
-		case 'a' <= c && c <= 'z':
-			continue
-		case c == '!' || c == '#' || c == '$' || c == '%' || c == '&' ||
-			c == '\'' || c == '*' || c == '+' || c == '-' || c == '.' ||
-			c == '^' || c == '_' || c == '`' || c == '|' || c == '~':
-			continue
-		default:
+		if c >= 128 || !tcharTable[c] {
 			return false
 		}
 	}

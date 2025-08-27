@@ -10,6 +10,7 @@
 - Add unit tests and benchmarks for cookie helpers
 - Fix HTTP initialism in cookie helper name
 - Introduce Len alias and deprecate Count in cookie interface
+- Optimize cookie name validation with a lookup table to reduce branching
 
 ## v1.2.6
 
