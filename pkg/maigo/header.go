@@ -47,18 +47,22 @@ func (h *Header) Add(key header.Type, value string) {
 // empty string if the receiver is nil, the map is uninitialized or the
 // key is invalid or absent.
 func (h *Header) Get(key header.Type) string {
+	if h == nil {
+		return ""
+	}
+
 	ks := key.String()
 
-	if h == nil || h.hdr == nil {
+	h.mu.RLock()
+	defer h.mu.RUnlock()
+
+	if h.hdr == nil {
 		return ""
 	}
 
 	if !httpguts.ValidHeaderFieldName(ks) {
 		return ""
 	}
-
-	h.mu.RLock()
-	defer h.mu.RUnlock()
 
 	return h.hdr.Get(ks)
 }

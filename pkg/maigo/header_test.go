@@ -35,6 +35,37 @@ func TestHeader_ConcurrentAddGet(t *testing.T) {
 	wg.Wait()
 }
 
+func TestHeader_ConcurrentSetGet(t *testing.T) {
+	t.Parallel()
+
+	h := newDefaultHTTPHeader()
+
+	const (
+		goroutines = 8
+		iterations = 1000
+	)
+
+	var wg sync.WaitGroup
+
+	wg.Add(goroutines)
+
+	for i := 0; i < goroutines; i++ {
+		go func(id int) {
+			defer wg.Done()
+
+			for j := 0; j < iterations; j++ {
+				if id%2 == 0 {
+					h.Set(header.ContentType, "application/json")
+				} else {
+					_ = h.Get(header.ContentType)
+				}
+			}
+		}(i)
+	}
+
+	wg.Wait()
+}
+
 func TestHeader_AddAndGet(t *testing.T) {
 	t.Parallel()
 
