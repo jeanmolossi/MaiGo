@@ -1,3 +1,17 @@
+# Release Notes
+
+## v1.2.7
+
+### BREAKING CHANGES
+- Added `Len() int` method to `contracts.Cookies` interface
+
+### Features
+- Harden cookies with nil, RFC-compliant name validation, bounds checks, and deep copy semantics (Add and Get clone cookies and normalize stored Names)
+- Add unit tests and benchmarks for cookie helpers
+- Fix HTTP initialism in cookie helper name
+- Introduce Len alias and deprecate Count in cookie interface
+- Optimize cookie name validation with a lookup table to reduce branching
+
 ## v1.2.6
 
 - ensure `Context.Set` safely ignores nil, avoids redundant assignments, and compares pointer identities to prevent panics with uncomparable contexts
