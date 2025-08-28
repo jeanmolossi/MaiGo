@@ -7,10 +7,12 @@ import (
 )
 
 // Header defines a minimal, concurrency-safe API for manipulating HTTP
-// headers. Implementations should validate field names and values according
-// to RFC 7230 and may silently discard invalid input.
+// headers. Implementations should validate field names and values
+// conforming to RFC 9110 (successor to RFC 7230) and may silently discard
+// invalid input.
 type Header interface {
-	// Unwrap returns a copy of the header map for read-only inspection.
+	// Unwrap returns a copy of the header map; mutations to the returned
+	// http.Header do not affect the original.
 	Unwrap() *http.Header
 	// Get retrieves the first value associated with key, or an empty string
 	// if the key is absent.

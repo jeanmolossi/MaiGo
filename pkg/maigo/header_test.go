@@ -91,6 +91,21 @@ func TestHeader_NilReceiver(t *testing.T) {
 	}
 }
 
+func TestHeader_UnwrapNilReceiver(t *testing.T) {
+	t.Parallel()
+
+	var h *Header
+
+	hdr := h.Unwrap()
+	if hdr == nil {
+		t.Fatal("Unwrap() on nil receiver returned nil")
+	}
+
+	if len(*hdr) != 0 {
+		t.Fatalf("Unwrap() on nil receiver returned non-empty header: %#v", *hdr)
+	}
+}
+
 func TestHeader_InvalidInputIgnored(t *testing.T) {
 	t.Parallel()
 
@@ -123,6 +138,33 @@ func BenchmarkHeaderSet(b *testing.B) {
 
 	for i := 0; i < b.N; i++ {
 		h := newDefaultHTTPHeader()
+		h.Set(header.ContentType, "application/json")
+	}
+}
+
+func BenchmarkHeaderAddReuse(b *testing.B) {
+	b.ReportAllocs()
+
+	h := newDefaultHTTPHeader()
+
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		h.Add(header.ContentType, "application/json")
+		b.StopTimer()
+		h.Set(header.ContentType, "")
+		b.StartTimer()
+	}
+}
+
+func BenchmarkHeaderSetReuse(b *testing.B) {
+	b.ReportAllocs()
+
+	h := newDefaultHTTPHeader()
+
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
 		h.Set(header.ContentType, "application/json")
 	}
 }

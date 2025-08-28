@@ -11,14 +11,13 @@ import (
 
 var _ contracts.Header = (*Header)(nil)
 
-// Header wraps an http.Header map providing concurrency-safe access
-// and validation of header names and values according to RFC 7230.
-//
-// A nil Header is treated as an empty map; methods are no-ops when the
-// receiver is nil.
+// Header wraps an http.Header map providing concurrency-safe access and
+// validation of header names and values according to RFC 9110.
+// A nil Header behaves like an empty map; all methods are no-ops on a nil
+// receiver.
 type Header struct {
-	mu     sync.RWMutex
-	header http.Header
+	mu  sync.RWMutex
+	hdr http.Header
 }
 
 // Add appends value to the field named by key. It creates the map on
@@ -35,18 +34,18 @@ func (h *Header) Add(key header.Type, value string) {
 	h.mu.Lock()
 	defer h.mu.Unlock()
 
-	if h.header == nil {
-		h.header = make(http.Header)
+	if h.hdr == nil {
+		h.hdr = make(http.Header)
 	}
 
-	h.header.Add(key.String(), value)
+	h.hdr.Add(key.String(), value)
 }
 
 // Get retrieves the first value associated with key. It returns an
 // empty string if the receiver is nil, the map is uninitialized or the
 // key is invalid or absent.
 func (h *Header) Get(key header.Type) string {
-	if h == nil || h.header == nil {
+	if h == nil || h.hdr == nil {
 		return ""
 	}
 
@@ -57,7 +56,7 @@ func (h *Header) Get(key header.Type) string {
 	h.mu.RLock()
 	defer h.mu.RUnlock()
 
-	return h.header.Get(key.String())
+	return h.hdr.Get(key.String())
 }
 
 // Set replaces the current value of key with value. It initializes the
@@ -74,11 +73,11 @@ func (h *Header) Set(key header.Type, value string) {
 	h.mu.Lock()
 	defer h.mu.Unlock()
 
-	if h.header == nil {
-		h.header = make(http.Header)
+	if h.hdr == nil {
+		h.hdr = make(http.Header)
 	}
 
-	h.header.Set(key.String(), value)
+	h.hdr.Set(key.String(), value)
 }
 
 // Unwrap returns a copy of the underlying header map. The caller may
@@ -93,25 +92,19 @@ func (h *Header) Unwrap() *http.Header {
 	h.mu.RLock()
 	defer h.mu.RUnlock()
 
-	if h.header == nil {
+	if h.hdr == nil {
 		hdr := make(http.Header)
 		return &hdr
 	}
 
-	copyHdr := make(http.Header, len(h.header))
+	cloned := h.hdr.Clone()
 
-	for k, v := range h.header {
-		vv := make([]string, len(v))
-		copy(vv, v)
-		copyHdr[k] = vv
-	}
-
-	return &copyHdr
+	return &cloned
 }
 
 // newDefaultHTTPHeader initializes a new Header with an empty map.
 func newDefaultHTTPHeader() *Header {
 	return &Header{
-		header: make(http.Header),
+		hdr: make(http.Header),
 	}
 }
