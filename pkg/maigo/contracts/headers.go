@@ -6,33 +6,19 @@ import (
 	"github.com/jeanmolossi/maigo/pkg/maigo/header"
 )
 
-// Header is the interface that wraps the basic methods for managing HTTP headers.
-//
-// This wrapper provides an abstraction layer over the standard http.Header type,
-// allowing for type-safe header manipulation and potential future enhancements
-// without changing the public API.
-//
-// It enables the package to implement custom header handling logic, such as
-// case-insensitive header matching or header-specific validations, while
-// maintaining a consistent interface.
-//
-// Example:
-//
-//	type CustomHeader struct {
-//	    header http.Header
-//	}
-//
-//	func (c *CustomHeader) Set(key header.Type, value string) {
-//	    c.header.Set(string(key), value)
-//	    // Add your logic here...
-//	}
+// Header defines a minimal, concurrency-safe API for manipulating HTTP
+// headers. Implementations should validate field names and values
+// conforming to RFC 9110 (successor to RFC 7230) and may silently discard
+// invalid input.
 type Header interface {
-	// Unwrap returns the underlying header map.
+	// Unwrap returns a copy of the header map; mutations to the returned
+	// http.Header do not affect the original.
 	Unwrap() *http.Header
-	// Get retrieves the first value associated with the key.
+	// Get retrieves the first value associated with key, or an empty string
+	// if the key is absent.
 	Get(key header.Type) string
-	// Add appends a value for the key.
+	// Add appends value to key, preserving existing values.
 	Add(key header.Type, value string)
-	// Set sets the header value, replacing any existing values.
+	// Set replaces any existing values of key with value.
 	Set(key header.Type, value string)
 }
