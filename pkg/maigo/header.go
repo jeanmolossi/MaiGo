@@ -27,7 +27,9 @@ func (h *Header) Add(key header.Type, value string) {
 		return
 	}
 
-	if !httpguts.ValidHeaderFieldName(key.String()) || !httpguts.ValidHeaderFieldValue(value) {
+	ks := key.String()
+
+	if !httpguts.ValidHeaderFieldName(ks) || !httpguts.ValidHeaderFieldValue(value) {
 		return
 	}
 
@@ -38,25 +40,27 @@ func (h *Header) Add(key header.Type, value string) {
 		h.hdr = make(http.Header)
 	}
 
-	h.hdr.Add(key.String(), value)
+	h.hdr.Add(ks, value)
 }
 
 // Get retrieves the first value associated with key. It returns an
 // empty string if the receiver is nil, the map is uninitialized or the
 // key is invalid or absent.
 func (h *Header) Get(key header.Type) string {
+	ks := key.String()
+
 	if h == nil || h.hdr == nil {
 		return ""
 	}
 
-	if !httpguts.ValidHeaderFieldName(key.String()) {
+	if !httpguts.ValidHeaderFieldName(ks) {
 		return ""
 	}
 
 	h.mu.RLock()
 	defer h.mu.RUnlock()
 
-	return h.hdr.Get(key.String())
+	return h.hdr.Get(ks)
 }
 
 // Set replaces the current value of key with value. It initializes the
@@ -66,7 +70,9 @@ func (h *Header) Set(key header.Type, value string) {
 		return
 	}
 
-	if !httpguts.ValidHeaderFieldName(key.String()) || !httpguts.ValidHeaderFieldValue(value) {
+	ks := key.String()
+
+	if !httpguts.ValidHeaderFieldName(ks) || !httpguts.ValidHeaderFieldValue(value) {
 		return
 	}
 
@@ -77,7 +83,7 @@ func (h *Header) Set(key header.Type, value string) {
 		h.hdr = make(http.Header)
 	}
 
-	h.hdr.Set(key.String(), value)
+	h.hdr.Set(ks, value)
 }
 
 // Unwrap returns a copy of the underlying header map. The caller may

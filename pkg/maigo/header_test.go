@@ -1,10 +1,39 @@
 package maigo
 
 import (
+	"sync"
 	"testing"
 
 	"github.com/jeanmolossi/maigo/pkg/maigo/header"
 )
+
+func TestHeader_ConcurrentAddGet(t *testing.T) {
+	t.Parallel()
+
+	h := newDefaultHTTPHeader()
+
+	const (
+		goroutines = 8
+		iterations = 1000
+	)
+
+	var wg sync.WaitGroup
+
+	wg.Add(goroutines)
+
+	for i := 0; i < goroutines; i++ {
+		go func() {
+			defer wg.Done()
+
+			for j := 0; j < iterations; j++ {
+				h.Add(header.ContentType, "application/json")
+				_ = h.Get(header.ContentType)
+			}
+		}()
+	}
+
+	wg.Wait()
+}
 
 func TestHeader_AddAndGet(t *testing.T) {
 	t.Parallel()
@@ -147,14 +176,22 @@ func BenchmarkHeaderAddReuse(b *testing.B) {
 
 	h := newDefaultHTTPHeader()
 
+	const batch = 1000
+
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
 		h.Add(header.ContentType, "application/json")
-		b.StopTimer()
-		h.Set(header.ContentType, "")
-		b.StartTimer()
+
+		if i%batch == batch-1 {
+			b.StopTimer()
+			h.Set(header.ContentType, "")
+			b.StartTimer()
+		}
 	}
+
+	b.StopTimer()
+	h.Set(header.ContentType, "")
 }
 
 func BenchmarkHeaderSetReuse(b *testing.B) {
