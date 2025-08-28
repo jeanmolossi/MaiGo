@@ -51,14 +51,14 @@ func (h *Header) Get(key header.Type) string {
 		return ""
 	}
 
-	ks := key.String()
-
 	h.mu.RLock()
 	defer h.mu.RUnlock()
 
 	if h.hdr == nil {
 		return ""
 	}
+
+	ks := key.String()
 
 	if !httpguts.ValidHeaderFieldName(ks) {
 		return ""
