@@ -63,12 +63,26 @@ func TestNewClientLoadBalancer_InvalidBaseURLs(t *testing.T) {
 		t.Fatalf("expected 2 validations, got %d", builder.client.Validations().Count())
 	}
 
-	if err := builder.client.Validations().Get(0); !errors.Is(err, ErrEmptyBaseURL) {
-		t.Errorf("first validation = %v, want ErrEmptyBaseURL", err)
+	foundEmpty, foundParse := false, false
+
+	for i := 0; i < builder.client.Validations().Count(); i++ {
+		err := builder.client.Validations().Get(i)
+		if errors.Is(err, ErrEmptyBaseURL) {
+			foundEmpty = true
+			continue
+		}
+
+		if errors.Is(err, ErrParseURL) {
+			foundParse = true
+		}
 	}
 
-	if err := builder.client.Validations().Get(1); !errors.Is(err, ErrParseURL) {
-		t.Errorf("second validation = %v, want ErrParseURL", err)
+	if !foundEmpty {
+		t.Errorf("expected validation error %v not found", ErrEmptyBaseURL)
+	}
+
+	if !foundParse {
+		t.Errorf("expected validation error %v not found", ErrParseURL)
 	}
 }
 
@@ -89,7 +103,13 @@ func TestDefaultClient(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			c := DefaultClient(tt.baseURL).(*ClientConfigBase)
+			client := DefaultClient(tt.baseURL)
+
+			c, ok := client.(*ClientConfigBase)
+			if !ok {
+				t.Fatalf("DefaultClient(%q) returned %T, want *ClientConfigBase", tt.baseURL, client)
+			}
+
 			gotErr := !c.Validations().IsEmpty()
 
 			if gotErr != tt.wantErr {

@@ -34,7 +34,12 @@ func TestClientConfigBase_HTTPMethods(t *testing.T) {
 
 			c := newClientConfigBase("https://example.com")
 
-			rb := tt.call(c, "/path").(*RequestBuilder)
+			rbContract := tt.call(c, "/path")
+
+			rb, ok := rbContract.(*RequestBuilder)
+			if !ok {
+				t.Fatalf("%s: expected *RequestBuilder, got %T", tt.name, rbContract)
+			}
 
 			if rb.request.config.Method() != tt.want {
 				t.Errorf("Method() = %s, want %s", rb.request.config.Method(), tt.want)
