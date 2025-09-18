@@ -34,6 +34,10 @@ func TestClientConfigBase_HTTPMethods(t *testing.T) {
 
 			c := newClientConfigBase("https://example.com")
 
+			if !c.Validations().IsEmpty() {
+				t.Fatalf("newClientConfigBase returned validation errors: %v", c.Validations().Unwrap())
+			}
+
 			rbContract := tt.call(c, "/path")
 
 			rb, ok := rbContract.(*RequestBuilder)
