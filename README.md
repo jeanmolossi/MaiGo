@@ -30,7 +30,31 @@ if err := resp.Body().AsJSON(&users); err != nil {
 }
 ```
 
-Outros exemplos estão disponíveis na pasta `examples`, incluindo chamadas com cabeçalhos customizados, balanceamento de carga e *tracing* com OpenTelemetry. E não se surpreenda se surgir uma nova referência à Mai no meio dos logs.
+Outros exemplos estão disponíveis na pasta `examples`, incluindo chamadas com cabeçalhos customizados, balanceamento de carga, *tracing* com OpenTelemetry e coleta de métricas com Prometheus. E não se surpreenda se surgir uma nova referência à Mai no meio dos logs.
+
+### Métricas de cliente HTTP
+
+O MaiGo inclui um `RoundTripper` que registra métricas de duração e contagem por método e status usando [Prometheus](https://prometheus.io/). Basta encadear o `metrics.MetricsRoundTripper` ao transporte do cliente:
+
+```go
+registry := prometheus.NewRegistry()
+
+transport := httpx.Compose(
+        http.DefaultTransport,
+        metrics.MetricsRoundTripper(metrics.RoundTripperOptions{
+                Registerer: registry,
+                Namespace:  "maigo",
+                Subsystem:  "client",
+        }),
+)
+
+client := maigo.NewClient(baseURL).
+        Config().
+        SetCustomTransport(transport).
+        Build()
+```
+
+Um exemplo completo pode ser encontrado em `examples/metrics_round_tripper`, incluindo a exportação das métricas registradas.
 
 ## Releases
 As releases são geradas automaticamente ao mesclar alterações no branch `main`.
