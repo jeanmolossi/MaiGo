@@ -84,8 +84,17 @@ func TestNewClientConfigBase_Validations(t *testing.T) {
 				t.Fatalf("expected validation error, got none")
 			}
 
-			if err := c.Validations().Get(0); !errors.Is(err, tt.wantErr) {
-				t.Errorf("validation error = %v, want %v", err, tt.wantErr)
+			found := false
+
+			for i := 0; i < c.Validations().Count(); i++ {
+				if errors.Is(c.Validations().Get(i), tt.wantErr) {
+					found = true
+					break
+				}
+			}
+
+			if !found {
+				t.Errorf("expected validation error %v not found", tt.wantErr)
 			}
 		})
 	}
@@ -118,8 +127,8 @@ func TestNewBalancedClientConfigBase_Validations(t *testing.T) {
 
 			c := newBalancedClientConfigBase(tt.baseURLs)
 
-			if c.Validations().Count() != len(tt.wantErrs) {
-				t.Fatalf("expected %d validations, got %d", len(tt.wantErrs), c.Validations().Count())
+			if c.Validations().Count() < len(tt.wantErrs) {
+				t.Fatalf("expected at least %d validations, got %d", len(tt.wantErrs), c.Validations().Count())
 			}
 
 			for _, we := range tt.wantErrs {

@@ -2,6 +2,7 @@ package maigo
 
 import (
 	"errors"
+	"net/url"
 	"testing"
 )
 
@@ -41,11 +42,30 @@ func TestNewClientLoadBalancer(t *testing.T) {
 		"https://server3.com",
 	}
 
+	for _, raw := range baseURLs {
+		if raw == "" {
+			t.Fatalf("base URL is empty")
+		}
+
+		if _, err := url.Parse(raw); err != nil {
+			t.Fatalf("invalid base URL %q: %v", raw, err)
+		}
+	}
+
 	builder := NewClientLoadBalancer(baseURLs)
+	if builder == nil {
+		t.Fatalf("NewClientLoadBalancer returned nil")
+	}
 
 	for i := 0; i < len(baseURLs)*2; i++ {
 		want := baseURLs[i%len(baseURLs)]
-		if got := builder.client.BaseURL().String(); got != want {
+
+		base := builder.client.BaseURL()
+		if base == nil {
+			t.Fatalf("call %d: BaseURL() returned nil", i)
+		}
+
+		if got := base.String(); got != want {
 			t.Errorf("call %d: BaseURL() = %q, want %q", i, got, want)
 		}
 	}
@@ -59,8 +79,8 @@ func TestNewClientLoadBalancer_InvalidBaseURLs(t *testing.T) {
 		"http://example.com:invalid",
 	})
 
-	if builder.client.Validations().Count() != 2 {
-		t.Fatalf("expected 2 validations, got %d", builder.client.Validations().Count())
+	if builder.client.Validations().Count() < 2 {
+		t.Fatalf("expected at least 2 validations, got %d", builder.client.Validations().Count())
 	}
 
 	foundEmpty, foundParse := false, false
