@@ -25,7 +25,7 @@ jobs:
       - run: |
           chmod +x scripts/coverage_report.sh
           bash -eo pipefail scripts/coverage_report.sh | tee coverage_report.md
-      - uses: peter-evans/find-comment@v3
+      - uses: peter-evans/find-comment@v4
         id: fc
         with:
           issue-number: ${{ github.event.pull_request.number }}

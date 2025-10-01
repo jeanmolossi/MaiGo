@@ -24,7 +24,7 @@ jobs:
       - run: |
           chmod +x scripts/benchmark_compare.sh
           bash -eo pipefail scripts/benchmark_compare.sh | tee benchmark_report.md
-      - uses: peter-evans/find-comment@v3
+      - uses: peter-evans/find-comment@v4
         id: fc
         with:
           issue-number: ${{ github.event.pull_request.number }}
