@@ -1,6 +1,6 @@
 # Release Notes
 
-## v1.2.12
+## v1.2.13
 
 - add a metrics-enabled HTTP round tripper that records per-method/status counters and histograms for client requests
 
