@@ -10,11 +10,11 @@ linters:
         - depguard
         - nonamedreturns
         - exhaustruct
+        - ireturn
 
     enable:
         - wsl_v5
         - revive
-        - ireturn
         - nlreturn
 
     settings:
@@ -29,15 +29,6 @@ linters:
                 - name: package-comments
                   severity: warning
                   exclude: [""]
-
-        ireturn:
-            allow:
-                - anon
-                - error
-                - empty
-                - stdlib
-                - github.com\/jeanmolossi\/MaiGo\/pkg\/maigo\/contracts
-                - github.com\/jeanmolossi\/MaiGo\/examples\/testserver
 
         nlreturn:
             block-size: 3
