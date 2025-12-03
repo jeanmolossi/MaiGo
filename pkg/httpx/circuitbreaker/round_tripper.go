@@ -6,7 +6,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/jeanmolossi/MaiGo/pkg/httpx"
+	"github.com/jeanmolossi/maigo/pkg/httpx"
 )
 
 // ErrCircuitOpen is returned when the circuit is open and requests are not allowed.
