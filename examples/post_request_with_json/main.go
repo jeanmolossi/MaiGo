@@ -29,6 +29,7 @@ func main() {
 
 	if resp.Status().Is5xxServerError() {
 		defer resp.Body().Close()
+
 		slog.Error("failed to create user, server error.", "status", resp.Status().Text())
 
 		return
@@ -36,6 +37,7 @@ func main() {
 
 	if resp.Status().Is4xxClientError() {
 		defer resp.Body().Close()
+
 		slog.Error("failed to create user, client error.", "status", resp.Status().Text())
 
 		return

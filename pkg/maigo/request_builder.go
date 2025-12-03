@@ -113,7 +113,6 @@ func (r *RequestBuilder) executeWithRetry(request *http.Request) (contracts.Resp
 		request.Header.Set(retryHeader.String(), strconv.FormatUint(uint64(attempt), 36))
 
 		response, executionErr = r.execute(request)
-
 		if executionErr == nil {
 			shouldRetry := config.ShouldRetry()
 
@@ -192,7 +191,9 @@ func newSecureRand() *mrand.Rand {
 
 func secureFloat64() float64 {
 	secureRandMu.Lock()
+
 	v := secureRand.Float64()
+
 	secureRandMu.Unlock()
 
 	return v

@@ -31,6 +31,7 @@ var tcharTable = func() [128]bool {
 	for _, c := range "!#$%&'*+-.^_|~`" {
 		tbl[c] = true
 	}
+
 	return tbl
 }()
 

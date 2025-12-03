@@ -78,11 +78,13 @@ func LoggerRoundTripper(h LoggerHooks) httpx.ChainedRoundTripper {
 
 	if h.StartMessage == "" {
 		const startMsg = "http.client.start"
+
 		h.StartMessage = startMsg
 	}
 
 	if h.EndMessage == "" {
 		const endMsg = "http.client.end"
+
 		h.EndMessage = endMsg
 	}
 
@@ -147,6 +149,7 @@ func LoggerRoundTripper(h LoggerHooks) httpx.ChainedRoundTripper {
 				clHeader := resp.Header.Get("Content-Length")
 
 				var serr error
+
 				cl, serr = strconv.Atoi(clHeader)
 
 				if serr != nil && !h.SupressErrors {

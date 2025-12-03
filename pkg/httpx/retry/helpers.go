@@ -82,7 +82,9 @@ func ensureReopenableBody(r *http.Request, capMem int64, strat BodyReplayStrateg
 	//nolint:wsl
 	if _, err = f.Write(buf.Bytes()); err != nil {
 		_ = f.Close()
+
 		cleanup()
+
 		_ = r.Body.Close()
 
 		return nil, false, err
@@ -91,7 +93,9 @@ func ensureReopenableBody(r *http.Request, capMem int64, strat BodyReplayStrateg
 	//nolint:wsl
 	if _, err = io.Copy(f, r.Body); err != nil {
 		_ = f.Close()
+
 		cleanup()
+
 		_ = r.Body.Close()
 
 		return nil, false, err
@@ -104,6 +108,7 @@ func ensureReopenableBody(r *http.Request, capMem int64, strat BodyReplayStrateg
 	//nolint:wsl
 	if err != nil {
 		_ = f.Close()
+
 		cleanup()
 
 		return nil, false, err
@@ -113,6 +118,7 @@ func ensureReopenableBody(r *http.Request, capMem int64, strat BodyReplayStrateg
 	//nolint:wsl
 	if _, err := f.Seek(0, io.SeekStart); err != nil {
 		_ = f.Close()
+
 		cleanup()
 
 		return nil, false, err

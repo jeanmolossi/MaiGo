@@ -97,6 +97,7 @@ func TestBalancedBaseURL_RoundRobin_Concurrent(t *testing.T) {
 				if s == r {
 					mu.Lock()
 					counts[idx]++
+
 					mu.Unlock()
 
 					return

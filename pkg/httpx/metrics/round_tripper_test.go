@@ -82,6 +82,7 @@ func requireHistogramSampleCount(t *testing.T, registry *prometheus.Registry, me
 				require.NotNil(t, m.GetHistogram(), "expected histogram for metric %s", metricName)
 				require.Equal(t, expected, m.GetHistogram().GetSampleCount())
 				require.Greater(t, m.GetHistogram().GetSampleSum(), 0.0)
+
 				return
 			}
 		}
