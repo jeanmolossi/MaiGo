@@ -29,6 +29,7 @@ func TestContextSetNilReceiver(t *testing.T) {
 				t.Fatalf("Set() panicked: %v", r)
 			}
 		}()
+
 		c.Set(context.Background())
 	}()
 }
@@ -69,6 +70,7 @@ func TestContextSetWithUncomparableContext(t *testing.T) {
 				t.Fatalf("Set() panicked: %v", r)
 			}
 		}()
+
 		c.Set(ctx2)
 	}()
 

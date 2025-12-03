@@ -189,6 +189,7 @@ func (u *UnbufferedBody) Set(body io.Reader) error {
 	} else {
 		u.reader = io.NopCloser(body)
 	}
+
 	u.mutex.Unlock()
 
 	if prev != nil {

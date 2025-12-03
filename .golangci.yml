@@ -3,33 +3,32 @@ version: "2"
 run:
     timeout: 1m
     tests: true
-    go: "1.23"
+    go: "1.25"
 
 linters:
     disable:
         - depguard
         - nonamedreturns
         - exhaustruct
+        - ireturn
 
     enable:
-        - wsl
+        - wsl_v5
+        - revive
+        - nlreturn
 
     settings:
+        wsl_v5:
+            branch-max-lines: 5
+            disable:
+                - inc-dec
+
         revive:
             enable-all-rules: false
             rules:
                 - name: package-comments
                   severity: warning
                   exclude: [""]
-
-        ireturn:
-            allow:
-                - anon
-                - error
-                - empty
-                - stdlib
-                - github.com\/jeanmolossi\/MaiGo\/pkg\/maigo\/contracts
-                - github.com\/jeanmolossi\/MaiGo\/examples\/testserver
 
         nlreturn:
             block-size: 3
@@ -56,8 +55,6 @@ formatters:
         - goimports
 
 issues:
-    max-issues-per-linter: 50
-    max-same-issues: 3
-    new: true
-    fix: false
+    max-issues-per-linter: 0
+    max-same-issues: 0
     whole-files: true
