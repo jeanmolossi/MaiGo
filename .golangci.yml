@@ -3,7 +3,7 @@ version: "2"
 run:
     timeout: 1m
     tests: true
-    go: "1.23"
+    go: "1.25"
 
 linters:
     disable:
@@ -12,9 +12,17 @@ linters:
         - exhaustruct
 
     enable:
-        - wsl
+        - wsl_v5
+        - revive
+        - ireturn
+        - nlreturn
 
     settings:
+        wsl_v5:
+            branch-max-lines: 5
+            disable:
+                - inc-dec
+
         revive:
             enable-all-rules: false
             rules:
