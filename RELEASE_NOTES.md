@@ -30,3 +30,7 @@
 - fix data race in UnbufferedBody by using write locks
 - add tests for body read/write helpers and concurrency safety
 - lint-only changes
+## v0.2.0
+- Added HTTP client circuit breaker middleware with configurable failure thresholds, recovery windows, and trip predicate support.
+- Documented circuit breaker behaviour, configuration options, and state transitions.
+- Added tests covering circuit opening, half-open probing, and recovery paths.
