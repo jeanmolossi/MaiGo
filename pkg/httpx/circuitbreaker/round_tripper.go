@@ -65,6 +65,7 @@ type cbTransport struct {
 
 func (c *cbTransport) RoundTrip(r *http.Request) (*http.Response, error) {
 	c.mu.Lock()
+
 	switch c.state {
 	case stateOpen:
 		if time.Since(c.openedAt) >= c.cfg.RecoveryWindow {
@@ -83,6 +84,7 @@ func (c *cbTransport) RoundTrip(r *http.Request) (*http.Response, error) {
 
 		c.probing = true
 	}
+
 	c.mu.Unlock()
 
 	resp, err := c.next.RoundTrip(r)
