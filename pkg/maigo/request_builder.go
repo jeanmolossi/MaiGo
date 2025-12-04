@@ -18,9 +18,7 @@ import (
 	"github.com/jeanmolossi/maigo/pkg/maigo/header"
 )
 
-var (
-	_ contracts.RequestBuilder = (*RequestBuilder)(nil)
-)
+var _ contracts.RequestBuilder = (*RequestBuilder)(nil)
 
 var (
 	secureRand   = newSecureRand()
