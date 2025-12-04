@@ -1,3 +1,4 @@
+// Package main illustrates cancelable requests using contexts.
 package main
 
 import (

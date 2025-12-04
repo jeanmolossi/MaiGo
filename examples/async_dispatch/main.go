@@ -1,3 +1,4 @@
+// Package main demonstrates asynchronous dispatching with MaiGo.
 package main
 
 import (

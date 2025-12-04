@@ -1,3 +1,4 @@
+// Package main demonstrates custom headers and cookies configuration.
 package main
 
 import (

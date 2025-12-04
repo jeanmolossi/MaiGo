@@ -1,3 +1,4 @@
+// Package main showcases load balancing between multiple endpoints.
 package main
 
 import (
