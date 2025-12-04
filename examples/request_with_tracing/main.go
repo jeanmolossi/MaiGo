@@ -1,3 +1,4 @@
+// Package main demonstrates MaiGo client tracing with OpenTelemetry.
 package main
 
 import (
@@ -5,11 +6,14 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"net/http"
 	"os"
+	"time"
 
 	"github.com/jeanmolossi/maigo/examples/testserver"
+	"github.com/jeanmolossi/maigo/pkg/httpx"
+	"github.com/jeanmolossi/maigo/pkg/httpx/tracing"
 	"github.com/jeanmolossi/maigo/pkg/maigo"
-	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/baggage"
 	stdoutmetric "go.opentelemetry.io/otel/exporters/stdout/stdoutmetric"
@@ -23,7 +27,10 @@ import (
 )
 
 func initTracer() (*sdktrace.TracerProvider, error) {
-	exporter, err := stdout.New(stdout.WithPrettyPrint())
+	exporter, err := stdout.New(
+		stdout.WithPrettyPrint(),
+		stdout.WithoutTimestamps(),
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -79,12 +86,6 @@ func main() {
 		log.Fatal(err)
 	}
 
-	defer func() {
-		if err := tp.Shutdown(context.Background()); err != nil {
-			log.Printf("Error shutting down tracer provider: %v", err)
-		}
-	}()
-
 	ts := testserver.NewManager().NewServer()
 	defer ts.Close()
 
@@ -95,15 +96,21 @@ func main() {
 
 	tr := otel.Tracer("examples/request_with_tracing")
 
-	oteltransporter := otelhttp.NewTransport(nil, otelhttp.WithMeterProvider(mp))
+	transport := httpx.Compose(
+		http.DefaultTransport,
+		tracing.WithTracing(),
+	)
 
 	client := maigo.NewClient(ts.URL).
-		Config().SetCustomTransport(oteltransporter).
+		Config().SetCustomTransport(transport).
 		Build()
 
 	err = func(ctx context.Context) error {
 		ctx, span := tr.Start(ctx, "say hello", trace.WithAttributes(semconv.PeerService("ExampleService")))
 		defer span.End()
+
+		span.SetAttributes(semconv.URLFull(ts.URL))
+		span.SetAttributes(semconv.HTTPRequestMethodKey.String(http.MethodGet))
 
 		res, err := client.GET("/").Context().Set(ctx).Send()
 		if err != nil {
@@ -118,12 +125,15 @@ func main() {
 		log.Fatal(err)
 	}
 
-	err = tp.Shutdown(context.Background())
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	err = tp.Shutdown(shutdownCtx)
 	if err != nil {
 		panic(err)
 	}
 
-	err = mp.Shutdown(context.Background())
+	err = mp.Shutdown(shutdownCtx)
 	if err != nil {
 		panic(err)
 	}

@@ -1,3 +1,4 @@
+// Package main retries requests after server errors.
 package main
 
 import (

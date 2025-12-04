@@ -1,5 +1,11 @@
 # Release Notes
 
+## v1.2.16
+
+- Added OpenTelemetry tracing round tripper for outbound HTTP requests with context propagation and span lifecycle management.
+- Documented tracing requirements, minimal tool versions, and provided an example of OTEL integration.
+- Updated examples to leverage the new tracing middleware and refreshed linting prerequisites.
+
 ## v1.2.15
 
 - Added HTTP client circuit breaker middleware with configurable failure thresholds, recovery windows, and trip predicate support.

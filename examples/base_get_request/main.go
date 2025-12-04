@@ -1,3 +1,4 @@
+// Package main shows a basic GET request with MaiGo.
 package main
 
 import (

@@ -1,3 +1,4 @@
+// Package httpx benchmarks round tripper composition helpers.
 package httpx
 
 import (

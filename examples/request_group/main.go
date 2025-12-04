@@ -1,3 +1,4 @@
+// Package main groups multiple requests executed together.
 package main
 
 import (
