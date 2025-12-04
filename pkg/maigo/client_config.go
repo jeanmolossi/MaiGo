@@ -3,6 +3,7 @@ package maigo
 import (
 	"errors"
 	"fmt"
+	"net/http"
 	"net/url"
 
 	"github.com/jeanmolossi/maigo/pkg/maigo/contracts"
@@ -12,6 +13,7 @@ import (
 var (
 	_ contracts.ClientConfig      = (*ClientConfigBase)(nil)
 	_ contracts.ClientHTTPMethods = (*ClientConfigBase)(nil)
+	_ contracts.ClientCompat      = (*ClientConfigBase)(nil)
 )
 
 // ClientConfigBase serves as the main entrypoint to configure HTTP client.
@@ -67,6 +69,22 @@ func (c *ClientConfigBase) PUT(path string) contracts.RequestBuilder {
 // TRACE implements contracts.ClientHTTPMethods.
 func (c *ClientConfigBase) TRACE(path string) contracts.RequestBuilder {
 	return newRequest(c, method.TRACE, path)
+}
+
+// Unwrap implements contracts.HTTPClientCompat.
+func (c *ClientConfigBase) Unwrap() *http.Client {
+	if compat, ok := c.httpClient.(contracts.HTTPClientCompat); ok && compat != nil {
+		return compat.Unwrap()
+	}
+
+	if c.httpClient == nil {
+		return nil
+	}
+
+	return &http.Client{
+		Transport: c.httpClient.Transport(),
+		Timeout:   c.httpClient.Timeout(),
+	}
 }
 
 // Cookies implements contracts.ClientConfig.

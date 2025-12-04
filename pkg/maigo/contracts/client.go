@@ -19,6 +19,17 @@ type Client interface {
 	ClientHTTPMethods
 }
 
+// ClientCompat exposes the MaiGo client configuration and provides access to
+// the underlying *http.Client for interoperability with the Go standard
+// library.
+type ClientCompat interface {
+	Client
+	// Unwrap exposes the configured *http.Client, carrying over MaiGo's
+	// client-level settings such as timeout, transport and redirect
+	// behaviour.
+	Unwrap() *http.Client
+}
+
 // ClientBuilder builds a Client. It allows configuring default headers and
 // cookies before producing the final ClientHTTPMethods value.
 //
@@ -55,6 +66,17 @@ type ConfigHTTPClient interface {
 	SetHttpClient(httpc HTTPClient)
 	// HttpClient retrieves the current HTTP client.
 	HttpClient() HTTPClient
+}
+
+// HTTPClientCompat is the minimal interface implemented by http.Client. It
+// adds an Unwrap method to access the concrete *http.Client value configured by
+// MaiGo.
+type HTTPClientCompat interface {
+	HTTPClient
+	// Unwrap exposes the configured *http.Client, carrying over MaiGo's
+	// client-level settings such as timeout, transport and redirect
+	// behaviour.
+	Unwrap() *http.Client
 }
 
 // HTTPClient is the minimal interface implemented by http.Client. It enables

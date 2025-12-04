@@ -5,7 +5,7 @@ import "github.com/jeanmolossi/maigo/pkg/maigo/contracts"
 var _ contracts.Builder[contracts.ClientHTTPMethods] = (*ClientBuilder)(nil)
 
 type ClientBuilder struct {
-	client contracts.Client
+	client contracts.ClientCompat
 }
 
 func NewClient(baseURL string) *ClientBuilder {
@@ -22,6 +22,10 @@ func NewClientLoadBalancer(baseURLs []string) *ClientBuilder {
 
 func DefaultClient(baseURL string) contracts.ClientHTTPMethods {
 	return NewClient(baseURL).Build()
+}
+
+func DefaultClientCompat(baseURL string) contracts.ClientCompat {
+	return NewClient(baseURL).client
 }
 
 // Build implements contracts.Builder.

@@ -18,7 +18,9 @@ import (
 	"github.com/jeanmolossi/maigo/pkg/maigo/header"
 )
 
-var _ contracts.RequestBuilder = (*RequestBuilder)(nil)
+var (
+	_ contracts.RequestBuilder = (*RequestBuilder)(nil)
+)
 
 var (
 	secureRand   = newSecureRand()
@@ -176,6 +178,26 @@ func (r *RequestBuilder) Send() (contracts.Response, error) {
 	}
 
 	return r.execute(req)
+}
+
+// Unwrap builds a *http.Request with all client and request configurations
+// applied. It mirrors the validations executed by Send but returns the
+// configured request instead of performing it.
+func (r *RequestBuilder) Unwrap() (*http.Request, error) {
+	if err := errors.Join(r.request.client.Validations().Unwrap()...); err != nil {
+		return nil, errors.Join(ErrClientValidation, err)
+	}
+
+	if err := errors.Join(r.request.config.Validations().Unwrap()...); err != nil {
+		return nil, errors.Join(ErrRequestValidation, err)
+	}
+
+	req, err := r.createHTTPRequest()
+	if err != nil {
+		return nil, errors.Join(ErrCreateRequest, err)
+	}
+
+	return req, nil
 }
 
 func newSecureRand() *mrand.Rand {
