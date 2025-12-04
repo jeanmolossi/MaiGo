@@ -13,12 +13,12 @@ linters:
         - ireturn
 
     enable:
-        - wsl
+        - wsl_v5
         - revive
         - nlreturn
 
     settings:
-        wsl:
+        wsl_v5:
             branch-max-lines: 5
             disable:
                 - inc-dec

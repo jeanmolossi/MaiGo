@@ -13,6 +13,7 @@ MaiGo oferece uma API baseada em *builders*, permitindo configurações de cabe�
 ## Requirements
 - Go 1.25 ou superior (não faça downgrade abaixo desta versão)
 - GolangCI-Lint 2.7+ para validações locais
+- Não faça downgrade do linter `wsl_v5` na configuração do GolangCI-Lint
 - Módulos listados em `go.mod`
 - Antes de abrir um PR, execute `make lint` garantindo o uso das versões mínimas de Go (1.25+) e GolangCI-Lint (2.7+)
 
