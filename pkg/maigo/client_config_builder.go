@@ -1,6 +1,7 @@
 package maigo
 
 import (
+	"crypto/tls"
 	"errors"
 	"net/http"
 	"net/url"
@@ -28,6 +29,20 @@ func (c *ClientConfigBuilder) SetCustomHTTPClient(httpClient contracts.HTTPClien
 // SetCustomTransport implements contracts.BuilderHTTPClientConfig.
 func (c *ClientConfigBuilder) SetCustomTransport(transport http.RoundTripper) contracts.ClientBuilder {
 	c.parent.client.HttpClient().SetTransport(transport)
+	return c.parent
+}
+
+// SetTLSConfig implements contracts.BuilderHTTPClientConfig.
+func (c *ClientConfigBuilder) SetTLSConfig(tlsConfig *tls.Config) contracts.ClientBuilder {
+	if transport, ok := c.parent.client.HttpClient().Transport().(*http.Transport); ok {
+		transport.TLSClientConfig = tlsConfig
+		return c.parent
+	}
+
+	c.parent.client.HttpClient().SetTransport(&http.Transport{
+		TLSClientConfig: tlsConfig,
+	})
+
 	return c.parent
 }
 

@@ -2,6 +2,7 @@ package contracts
 
 import (
 	"context"
+	"crypto/tls"
 	"io"
 	"net/http"
 	"net/url"
@@ -173,6 +174,8 @@ type BuilderHTTPClientConfig[T any] interface {
 	SetCustomHTTPClient(httpClient HTTPClient) T
 	// SetCustomTransport overrides the client's transport.
 	SetCustomTransport(transport http.RoundTripper) T
+	// SetTLSConfig sets the TLS configuration used by the client's transport.
+	SetTLSConfig(tlsConfig *tls.Config) T
 	// SetTimeout defines the request timeout.
 	SetTimeout(duration time.Duration) T
 	// SetFollowRedirects determines whether redirects are followed automatically.
