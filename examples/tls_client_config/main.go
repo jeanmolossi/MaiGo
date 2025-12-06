@@ -15,7 +15,7 @@ import (
 func main() {
 	// Create a HTTPS test server with a self-signed certificate.
 	server := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintln(w, "secure ok")
+		fmt.Fprintln(w, "secure ok") //nolint:errcheck,gosec
 	}))
 	defer server.Close()
 
