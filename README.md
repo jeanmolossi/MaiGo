@@ -107,6 +107,31 @@ client := maigo.NewClient(baseURL).
 
 Um exemplo funcional está disponível em `examples/request_with_tracing`, mostrando a criação de spans e a propagação automática do contexto ao longo das chamadas HTTP.
 
+### Configuração de TLS do client
+
+Quando precisar confiar em um certificado específico ou ajustar o handshake TLS, aplique um `*tls.Config` diretamente no builder. O exemplo abaixo adiciona o certificado do servidor a um pool de confiança e o reaproveita no cliente:
+
+```go
+server := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+        fmt.Fprintln(w, "secure ok")
+}))
+defer server.Close()
+
+certPool := x509.NewCertPool()
+certPool.AddCert(server.Certificate())
+
+tlsConfig := &tls.Config{RootCAs: certPool}
+
+client := maigo.NewClient(server.URL).
+        Config().
+        SetTLSConfig(tlsConfig).
+        Build()
+
+resp, err := client.GET("/").Send()
+```
+
+Um programa completo pode ser encontrado em `examples/tls_client_config` mostrando a configuração do pool de certificados e o consumo do endpoint HTTPS.
+
 ## Releases
 As releases são geradas automaticamente ao mesclar alterações no branch `main`.
 O workflow [`release.yml`](.github/workflows/release.yml) usa [GoReleaser](https://goreleaser.com/) para criar tags, gerar changelog e publicar pacotes utilizando o `GITHUB_TOKEN` com permissões de `contents: write` e `packages: write`.
