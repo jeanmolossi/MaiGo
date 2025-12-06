@@ -157,17 +157,9 @@ func (r *RequestBuilder) calculateRetryDelay(attempt uint) time.Duration {
 }
 
 func (r *RequestBuilder) Send() (contracts.Response, error) {
-	if err := errors.Join(r.request.client.Validations().Unwrap()...); err != nil {
-		return nil, errors.Join(ErrClientValidation, err)
-	}
-
-	if err := errors.Join(r.request.config.Validations().Unwrap()...); err != nil {
-		return nil, errors.Join(ErrRequestValidation, err)
-	}
-
-	req, err := r.createHTTPRequest()
+	req, err := r.buildRequest()
 	if err != nil {
-		return nil, errors.Join(ErrCreateRequest, err)
+		return nil, err
 	}
 
 	retry := r.request.config.RetryConfig()
@@ -182,6 +174,10 @@ func (r *RequestBuilder) Send() (contracts.Response, error) {
 // applied. It mirrors the validations executed by Send but returns the
 // configured request instead of performing it.
 func (r *RequestBuilder) Unwrap() (*http.Request, error) {
+	return r.buildRequest()
+}
+
+func (r *RequestBuilder) buildRequest() (*http.Request, error) {
 	if err := errors.Join(r.request.client.Validations().Unwrap()...); err != nil {
 		return nil, errors.Join(ErrClientValidation, err)
 	}
