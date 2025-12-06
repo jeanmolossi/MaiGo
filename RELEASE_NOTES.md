@@ -1,5 +1,10 @@
 # Release Notes
 
+## v1.2.18
+
+- Added TLS configuration support to the HTTP client builder with custom `*tls.Config` injection for transports and compatibility helpers.
+- Documented TLS setup with runnable client example and README guidance, including lint-silencing annotations for helper responses.
+
 ## v1.2.17
 
 - Added `RequestBuilder.Unwrap` to emit fully configured `*http.Request` values for direct `net/http` compatibility without verb-specific helpers.
