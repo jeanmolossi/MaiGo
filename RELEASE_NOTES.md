@@ -1,5 +1,11 @@
 # Release Notes
 
+## v1.2.17
+
+- Added `RequestBuilder.Unwrap` to emit fully configured `*http.Request` values for direct `net/http` compatibility without verb-specific helpers.
+- Retained compatibility helpers for unwrapping configured `*http.Client` instances while keeping existing builder APIs intact.
+- Documented standard library interop with updated examples showcasing `DefaultClientCompat` and request unwrapping.
+
 ## v1.2.16
 
 - Added OpenTelemetry tracing round tripper for outbound HTTP requests with context propagation and span lifecycle management.

@@ -8,7 +8,10 @@ import (
 )
 
 // interface implementation type check.
-var _ contracts.HTTPClient = (*Client)(nil)
+var (
+	_ contracts.HTTPClient       = (*Client)(nil)
+	_ contracts.HTTPClientCompat = (*Client)(nil)
+)
 
 type Client struct {
 	client *http.Client
@@ -47,6 +50,11 @@ func (d *Client) Timeout() time.Duration {
 // Transport implements contracts.HTTPClient.
 func (d *Client) Transport() http.RoundTripper {
 	return d.client.Transport
+}
+
+// Unwrap implements contracts.HTTPClientCompat.
+func (d *Client) Unwrap() *http.Client {
+	return d.client
 }
 
 // newDefaultHTTPClient initialized a new DefaultHttpClient.

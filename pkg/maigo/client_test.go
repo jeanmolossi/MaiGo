@@ -2,8 +2,12 @@ package maigo
 
 import (
 	"errors"
+	"net/http"
 	"net/url"
 	"testing"
+	"time"
+
+	"github.com/jeanmolossi/maigo/pkg/maigo/contracts"
 )
 
 func TestNewClient(t *testing.T) {
@@ -136,6 +140,44 @@ func TestDefaultClient(t *testing.T) {
 				t.Errorf("Validations().IsEmpty() = %v, wantErr %v", gotErr, tt.wantErr)
 			}
 		})
+	}
+}
+
+func TestDefaultClientCompatUnwrap(t *testing.T) {
+	t.Parallel()
+
+	const baseURL = "https://example.com"
+
+	timeout := 3 * time.Second
+
+	builder := NewClient(baseURL)
+
+	builder.Config().SetFollowRedirects(false)
+	builder.Config().SetTimeout(timeout)
+
+	client := builder.Build()
+
+	compat, ok := client.(contracts.ClientCompat)
+	if !ok {
+		t.Fatalf("Build() returned %T, want ClientCompat", client)
+	}
+
+	httpClient := compat.Unwrap()
+	if httpClient == nil {
+		t.Fatal("Unwrap() returned nil")
+	}
+
+	if httpClient.Timeout != timeout {
+		t.Errorf("Unwrap() Timeout = %s, want %s", httpClient.Timeout, timeout)
+	}
+
+	if httpClient.CheckRedirect == nil {
+		t.Fatal("Unwrap() did not preserve redirect configuration")
+	}
+
+	redirectErr := httpClient.CheckRedirect(new(http.Request), nil)
+	if !errors.Is(redirectErr, http.ErrUseLastResponse) {
+		t.Fatalf("CheckRedirect() error = %v, want %v", redirectErr, http.ErrUseLastResponse)
 	}
 }
 

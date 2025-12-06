@@ -157,6 +157,27 @@ func (r *RequestBuilder) calculateRetryDelay(attempt uint) time.Duration {
 }
 
 func (r *RequestBuilder) Send() (contracts.Response, error) {
+	req, err := r.buildRequest()
+	if err != nil {
+		return nil, err
+	}
+
+	retry := r.request.config.RetryConfig()
+	if retry != nil && retry.MaxAttempts() > 1 {
+		return r.executeWithRetry(req)
+	}
+
+	return r.execute(req)
+}
+
+// Unwrap builds a *http.Request with all client and request configurations
+// applied. It mirrors the validations executed by Send but returns the
+// configured request instead of performing it.
+func (r *RequestBuilder) Unwrap() (*http.Request, error) {
+	return r.buildRequest()
+}
+
+func (r *RequestBuilder) buildRequest() (*http.Request, error) {
 	if err := errors.Join(r.request.client.Validations().Unwrap()...); err != nil {
 		return nil, errors.Join(ErrClientValidation, err)
 	}
@@ -170,12 +191,7 @@ func (r *RequestBuilder) Send() (contracts.Response, error) {
 		return nil, errors.Join(ErrCreateRequest, err)
 	}
 
-	retry := r.request.config.RetryConfig()
-	if retry != nil && retry.MaxAttempts() > 1 {
-		return r.executeWithRetry(req)
-	}
-
-	return r.execute(req)
+	return req, nil
 }
 
 func newSecureRand() *mrand.Rand {

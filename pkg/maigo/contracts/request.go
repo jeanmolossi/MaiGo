@@ -1,5 +1,7 @@
 package contracts
 
+import "net/http"
+
 // RequestBuilder builds and executes an HTTP request. It exposes fluent
 // builders for headers, body, retries, context and query parameters. The
 // final Send call performs the request and returns a Response.
@@ -24,4 +26,8 @@ type RequestBuilder interface {
 
 	// Send executes the HTTP request.
 	Send() (Response, error)
+
+	// Unwrap finalizes the builder and returns a fully configured *http.Request
+	// without executing it.
+	Unwrap() (*http.Request, error)
 }

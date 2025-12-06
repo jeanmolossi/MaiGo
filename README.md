@@ -13,6 +13,7 @@ MaiGo oferece uma API baseada em *builders*, permitindo configurações de cabe�
 ## Requirements
 - Go 1.25 ou superior (não faça downgrade abaixo desta versão)
 - GolangCI-Lint 2.7+ para validações locais
+- Não faça downgrade do linter `wsl_v5` na configuração do GolangCI-Lint
 - Módulos listados em `go.mod`
 - Antes de abrir um PR, execute `make lint` garantindo o uso das versões mínimas de Go (1.25+) e GolangCI-Lint (2.7+)
 
@@ -33,6 +34,29 @@ if err := resp.Body().AsJSON(&users); err != nil {
 ```
 
 Outros exemplos estão disponíveis na pasta `examples`, incluindo chamadas com cabeçalhos customizados, balanceamento de carga, *tracing* com OpenTelemetry e coleta de métricas com Prometheus. E não se surpreenda se surgir uma nova referência à Mai no meio dos logs.
+
+### Compatibilidade com `http.Client`
+
+Precisa interoperar com a biblioteca padrão? Use o builder do MaiGo e extraia os valores compatíveis:
+
+```go
+// Obtém um *http.Client com as configurações aplicadas no builder
+clientBuilder := maigo.NewClient(baseURL)
+clientBuilder.Config().SetTimeout(5 * time.Second)
+httpClient := clientBuilder.Build().(contracts.ClientCompat).Unwrap()
+
+// Cria um *http.Request pronto para ser enviado com o http.Client padrão
+reqBuilder := maigo.NewClient(baseURL)
+reqBuilder.Header().Add(header.UserAgent, "mai-go")
+req, err := reqBuilder.Build().
+        GET("/users").
+        Unwrap()
+if err != nil {
+        // Trate o erro de construção da requisição
+}
+
+resp, err := httpClient.Do(req)
+```
 
 ### Métricas de cliente HTTP
 
