@@ -1,5 +1,9 @@
 # Release Notes
 
+## v1.2.19
+
+- Fixed `Client.Config()` method return type and `ClientBuilder` interface.
+
 ## v1.2.18
 
 - Added TLS configuration support to the HTTP client builder with custom `*tls.Config` injection for transports and compatibility helpers.

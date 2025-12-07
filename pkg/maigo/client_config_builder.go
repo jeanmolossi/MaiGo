@@ -16,7 +16,7 @@ type ClientConfigBuilder struct {
 	parent *ClientBuilder
 }
 
-func (b *ClientBuilder) Config() *ClientConfigBuilder {
+func (b *ClientBuilder) Config() contracts.BuilderHTTPClientConfig[contracts.ClientBuilder] {
 	return &ClientConfigBuilder{parent: b}
 }
 
