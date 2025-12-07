@@ -40,6 +40,8 @@ type ClientCompat interface {
 //	        Header().Add(header.Accept, mime.JSON.String()).
 //	        Build()
 type ClientBuilder interface {
+	// Config returns a builder to configure default client options.
+	Config() BuilderHTTPClientConfig[ClientBuilder]
 	// Header returns a builder to configure default headers.
 	Header() BuilderHeader[ClientBuilder]
 	// Cookie returns a builder to configure default cookies.
